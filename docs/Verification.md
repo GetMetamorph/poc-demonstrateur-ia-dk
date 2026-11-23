@@ -1,5 +1,11 @@
 # Vérifications du POC
 
+## Mode sombre du 23 novembre 2026
+
+Bouton clair/sombre dans la navbar commune, préférence système initiale, choix mémorisé dans le navigateur et application avant les styles. Les couleurs du chat, de la fiche, de la relecture et de l’administration utilisent les mêmes variables de thème, avec les composants Bootstrap 5.3 natifs.
+
+Les **96 tests .NET** passent. Huit contrôles jsdom vérifient l’initialisation avant le contenu, les deux bascules, le libellé accessible et `aria-pressed`, la restauration des préférences, une préférence invalide, le stockage bloqué et l’absence de `matchMedia`. Le démarrage HTTP réel confirme le chargement du script avant les styles, l’accès aux ressources CSS/JS et la présence de la bascule dans les espaces demandeur et administrateur. `node --check` et `git diff --check` passent. Le rendu visuel dans un navigateur reste à vérifier.
+
 ## Étape 3 du 23 novembre 2026
 
 Le vocabulaire affiché utilise « Transmettre / Transmise ». Les tests vérifient aussi le nouveau formulaire, l’accord « Je confirme la transmission » et l’affichage « Transmise » pour une demande déjà stockée avec son code historique.

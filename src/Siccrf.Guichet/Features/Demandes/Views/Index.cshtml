@@ -90,7 +90,7 @@
         </div>
     </section>
     <section class="panel fiche-panel" id="fiche-panel" aria-labelledby="fiche-title" hidden>
-        <div class="panel-header"><h2 id="fiche-title" tabindex="-1">Expression de besoin</h2><span class="badge text-bg-light">Brouillon</span></div>
+        <div class="panel-header"><h2 id="fiche-title" tabindex="-1">Expression de besoin</h2><span class="badge badge-draft">Brouillon</span></div>
         <div class="fiche-progress"><div class="d-flex justify-content-between"><span>Champs obligatoires renseignés</span><strong id="completion-count">@Model.NombreRenseignes / @Model.NombreObligatoires</strong></div><progress id="completion-progress" value="@Model.NombreRenseignes" max="@Model.NombreObligatoires" aria-label="Complétude de la fiche">@Model.Progression %</progress><small>Les obligations sont des règles du POC ; les rubriques facultatives ne bloquent pas l'envoi.</small></div>
         <dl class="identity-grid"><div><dt>Demandeur</dt><dd>@CompteDemo.Demandeur</dd></div><div><dt>Bureau</dt><dd>@CompteDemo.Bureau</dd></div><div><dt>N° de demande</dt><dd>Attribué à la transmission</dd></div><div><dt>Date du brouillon (UTC)</dt><dd>@Model.Fiche.DateCreation.ToString("dd/MM/yyyy")</dd></div><div><dt>Valideur prévu (fictif)</dt><dd>@CompteDemo.Valideur</dd></div></dl>
         <div class="fiche-content">

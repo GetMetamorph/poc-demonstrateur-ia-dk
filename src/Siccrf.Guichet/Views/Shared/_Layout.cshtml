@@ -5,6 +5,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@ViewData["Title"] · Guichet SICCRF</title>
+    <script src="~/js/theme.js" asp-append-version="true"></script>
     <link rel="stylesheet" href="~/lib/bootstrap/bootstrap.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script src="~/js/fiche.js" asp-append-version="true" defer></script>
@@ -14,11 +15,16 @@
     <header class="app-header">
         <nav class="container-fluid navbar" aria-label="Navigation principale">
             <a href="/" class="brand"><span class="brand-mark" aria-hidden="true">S</span><span>Guichet SICCRF</span></a>
-            <form asp-controller="ComptesDemo" asp-action="Changer" method="post" class="role-switch">
-                <span class="role-label">Mode démo</span>
-                <button name="role" value="demandeur" class="btn btn-sm @(!Compte.EstAdministrateur ? "btn-primary" : "btn-outline-secondary")" aria-pressed="@((!Compte.EstAdministrateur).ToString().ToLowerInvariant())">Demandeur</button>
-                <button name="role" value="administrateur" class="btn btn-sm @(Compte.EstAdministrateur ? "btn-primary" : "btn-outline-secondary")" aria-pressed="@(Compte.EstAdministrateur.ToString().ToLowerInvariant())">Administrateur</button>
-            </form>
+            <div class="navbar-actions">
+                <button type="button" id="theme-toggle" class="btn btn-sm btn-quiet theme-toggle" aria-label="Activer le mode sombre" aria-pressed="false" hidden>
+                    <span class="theme-icon" aria-hidden="true">☾</span><span id="theme-label">Mode sombre</span>
+                </button>
+                <form asp-controller="ComptesDemo" asp-action="Changer" method="post" class="role-switch">
+                    <span class="role-label">Mode démo</span>
+                    <button name="role" value="demandeur" class="btn btn-sm @(!Compte.EstAdministrateur ? "btn-primary" : "btn-outline-secondary")" aria-pressed="@((!Compte.EstAdministrateur).ToString().ToLowerInvariant())">Demandeur</button>
+                    <button name="role" value="administrateur" class="btn btn-sm @(Compte.EstAdministrateur ? "btn-primary" : "btn-outline-secondary")" aria-pressed="@(Compte.EstAdministrateur.ToString().ToLowerInvariant())">Administrateur</button>
+                </form>
+            </div>
         </nav>
     </header>
     <main class="container-fluid app-main" id="contenu">

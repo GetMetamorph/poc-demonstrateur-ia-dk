@@ -1,5 +1,7 @@
 "use strict";
 
+import { ChatFeedback } from "./chat-feedback.js";
+
 (() => {
     const form = document.getElementById("chat-form");
     if (!form) return;
@@ -12,6 +14,7 @@
     const error = document.getElementById("chat-error");
     const status = document.getElementById("chat-status");
     const configured = document.querySelector(".model-settings").dataset.configure === "true";
+    const feedback = new ChatFeedback();
     let busy = false;
     let dirty = false;
     let retryAt = 0;
@@ -57,14 +60,17 @@
         return result;
     }
 
-    async function run(action, waiting) {
+    async function run(action, waiting, reply = false) {
         if (busy) return;
         busy = true;
         showError("");
         status.textContent = waiting;
+        feedback.start(reply, message.value.trim());
         refreshControls();
+        let success = false;
         try {
             await action();
+            success = true;
             status.textContent = "";
         } catch (exception) {
             status.textContent = "";
@@ -74,6 +80,8 @@
         } finally {
             busy = false;
             refreshControls();
+            feedback.finish(success, reply);
+            if (reply && !message.disabled) message.focus();
         }
     }
 
@@ -89,6 +97,7 @@
         });
         const completed = state.nombreObligatoires - state.manquants.length;
         document.getElementById("completion-count").textContent = `${completed} / ${state.nombreObligatoires}`;
+        document.getElementById("fiche-toggle-count").textContent = `${completed}/${state.nombreObligatoires}`;
         document.getElementById("completion-progress").value = completed;
         document.getElementById("missing-details").hidden = state.manquants.length === 0;
         document.getElementById("complete-note").hidden = state.manquants.length > 0;
@@ -152,15 +161,20 @@
         }
     }, "Sélection du modèle…"));
 
+    message.addEventListener("keydown", event => {
+        if (event.key !== "Enter" || event.shiftKey || event.isComposing || event.keyCode === 229) return;
+        event.preventDefault();
+        if (!send.disabled) form.requestSubmit(send);
+    });
+
     form.addEventListener("submit", event => {
         event.preventDefault();
         if (busy || dirty || !acceptedModel || Date.now() < retryAt || !message.value.trim()) return;
+        feedback.prepareAudio();
         run(async () => {
             applyState(await request("/conversation/messages", { texte: message.value.trim(), revision: revision() }));
             message.value = "";
-            document.querySelector(".chat-messages").scrollTop = document.querySelector(".chat-messages").scrollHeight;
-            message.focus();
-        }, "Albert prépare sa réponse…");
+        }, "Albert prépare sa réponse…", true);
     });
 
     refreshControls();

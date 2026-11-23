@@ -172,6 +172,29 @@ public sealed class AlbertChatServiceTests : IDisposable
         Assert.Equal("Réduire les erreurs", fiche.Champs["benefices"]);
     }
 
+    [Fact]
+    public async Task LaFicheRecoitLaReformulationEtLeChatConserveLeMessageOriginal()
+    {
+        var texte = "ben on se renvoie les excel par mail et on sait plus lequel est le bon";
+        _http.Catalogue();
+        _http.Completion(JsonSerializer.Serialize(new
+        {
+            message = "Informations reformulées.",
+            modifications = new[]
+            {
+                new { champ = "situationActuelle", valeur = "Le suivi repose sur l'échange de fichiers Excel par courriel.", source = "on se renvoie les excel par mail" },
+                new { champ = "difficultes", valeur = "La version de référence des fichiers est difficile à identifier.", source = "on sait plus lequel est le bon" }
+            }
+        }));
+        var fiche = new FicheBrouillon();
+        await Conversation().EnvoyerAsync(fiche, texte, "modele-test", CancellationToken.None);
+
+        Assert.Equal("Le suivi repose sur l'échange de fichiers Excel par courriel.", fiche.Champs["situationActuelle"]);
+        Assert.Equal("La version de référence des fichiers est difficile à identifier.", fiche.Champs["difficultes"]);
+        Assert.Equal(texte, fiche.Messages[0].Content);
+        Assert.DoesNotContain("ben on", fiche.Champs["situationActuelle"]);
+    }
+
     private AlbertCatalogue Catalogue() => new(new AlbertApiClient(_http, Options.Create(_options)), _cache);
     private ConversationService Conversation() => new(new AlbertChatService(
         new AlbertApiClient(_http, Options.Create(_options)), Catalogue(), new ChatPropositionLecteur()),

@@ -98,7 +98,7 @@ public sealed class ConversationHttpTests
         Assert.Equal(HttpStatusCode.BadGateway, reponse.StatusCode);
         var page = await client.GetStringAsync("/");
         Assert.Contains("0 / 10", page);
-        Assert.DoesNotContain("class=\"history-message", page);
+        Assert.Matches("id=\"chat-history\">\\s*</div>", page);
         Assert.Contains("data-revision value=\"0\"", page);
     }
 

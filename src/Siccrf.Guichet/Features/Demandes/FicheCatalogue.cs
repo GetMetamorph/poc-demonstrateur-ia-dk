@@ -38,6 +38,6 @@ public static class FicheCatalogue
         new("references", "6. Pièces et précisions complémentaires", "Documents joints ou références utiles",
             "Facultatif. Références textuelles uniquement pour ce POC.", false),
         new("pointsAClarifier", "6. Pièces et précisions complémentaires", "Points restant à clarifier",
-            "Incertitudes identifiées ; cette rubrique ne bloque pas à elle seule la soumission.", false)
+            "Incertitudes identifiées ; cette rubrique ne bloque pas à elle seule la transmission.", false)
     ]);
 }

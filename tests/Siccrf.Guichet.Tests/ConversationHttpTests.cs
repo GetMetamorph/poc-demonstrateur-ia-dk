@@ -179,7 +179,7 @@ public sealed class ConversationHttpTests
     }
 
     [Fact]
-    public async Task UneFicheCompleteEtUnOuiNeSoumettentRienALetapeDeux()
+    public async Task UnOuiAvantLaQuestionDeConfirmationNeSoumetRien()
     {
         using var api = new AlbertTestApi();
         api.Catalogue();
@@ -268,7 +268,9 @@ public sealed class ConversationHttpTests
         builder.UseContentRoot(Path.GetFullPath("../../../../../src/Siccrf.Guichet", AppContext.BaseDirectory));
         builder.ConfigureAppConfiguration((_, configuration) => configuration.AddInMemoryCollection(new Dictionary<string, string?>
         {
-            ["Albert:ApiKey"] = cle, ["Albert:Model"] = modele, ["Albert:TimeoutSeconds"] = delai
+            ["Albert:ApiKey"] = cle, ["Albert:Model"] = modele, ["Albert:TimeoutSeconds"] = delai,
+            ["Database:Path"] = Path.Combine(Path.GetTempPath(), $"siccrf-conversation-{Guid.NewGuid():N}.db"),
+            ["Database:Pooling"] = "false"
         }));
         builder.ConfigureServices(services => services.AddSingleton<IHttpClientFactory>(api));
     });

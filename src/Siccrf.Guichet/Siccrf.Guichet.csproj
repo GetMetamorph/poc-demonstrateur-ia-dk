@@ -6,4 +6,8 @@
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <UserSecretsId>siccrf-guichet-poc-local-6b044848</UserSecretsId>
   </PropertyGroup>
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" Version="10.0.15" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.15" PrivateAssets="all" />
+  </ItemGroup>
 </Project>

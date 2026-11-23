@@ -1,0 +1,14 @@
+@model IReadOnlyDictionary<string, string>
+<div class="fiche-content">
+    @foreach (var rubrique in FicheCatalogue.Champs.GroupBy(c => c.Rubrique))
+    {
+        <section class="fiche-section">
+            <h3>@rubrique.Key</h3>
+            @foreach (var champ in rubrique)
+            {
+                var valeur = Model.GetValueOrDefault(champ.Cle);
+                <div class="preview-field"><h4>@champ.Libelle</h4><p class="@(string.IsNullOrWhiteSpace(valeur) ? "field-empty" : "")">@(string.IsNullOrWhiteSpace(valeur) ? "Non renseigné" : valeur)</p></div>
+            }
+        </section>
+    }
+</div>

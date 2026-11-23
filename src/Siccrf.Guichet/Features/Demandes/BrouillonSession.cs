@@ -2,7 +2,7 @@ using System.Text.Json;
 
 namespace Siccrf.Guichet.Features.Demandes;
 
-// Brouillon temporaire côté serveur. La persistance SQLite viendra avec la soumission.
+// Brouillon temporaire côté serveur. La persistance SQLite viendra avec la transmission.
 public sealed class BrouillonSession(IHttpContextAccessor accessor)
 {
     private const string Cle = "fiche-brouillon";

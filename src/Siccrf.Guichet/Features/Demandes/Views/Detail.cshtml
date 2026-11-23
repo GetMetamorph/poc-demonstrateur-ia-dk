@@ -1,0 +1,37 @@
+@model DemandeDetail
+@{
+    ViewData["Title"] = Model.Demande.Reference;
+    var demande = Model.Demande;
+}
+<article class="panel document-page">
+    <div class="panel-header"><div><p class="eyebrow mb-1">@demande.Reference</p><h1>@demande.Intitule</h1></div><span class="badge @(demande.Statut == StatutsDemande.Validee ? "text-bg-success" : "text-bg-primary")">@demande.LibelleStatut</span></div>
+    @if (TempData["Succes"] is string succes) { <div class="alert alert-success m-3" role="status">@succes</div> }
+    @if (TempData["Erreur"] is string erreur) { <div class="alert alert-warning m-3" role="alert">@erreur</div> }
+    <dl class="identity-grid">
+        <div><dt>Demandeur</dt><dd>@demande.Demandeur</dd></div>
+        <div><dt>Bureau</dt><dd>@demande.Bureau</dd></div>
+        <div><dt>Transmise le (heure de Paris)</dt><dd>@DatesFrance.Afficher(demande.DateSoumissionUtc)</dd></div>
+        <div><dt>Confirmation explicite</dt><dd>@DatesFrance.Afficher(demande.DateConfirmationUtc) · @demande.ModeConfirmation</dd></div>
+        <div><dt>Valideur prévu</dt><dd>@demande.ValideurPrevu</dd></div>
+        @if (demande.DateValidationUtc is DateTime dateValidation)
+        {
+            <div><dt>Validée par @demande.ValidePar</dt><dd>@DatesFrance.Afficher(dateValidation)</dd></div>
+        }
+    </dl>
+    @await Html.PartialAsync("~/Features/Demandes/Views/_Rubriques.cshtml", demande.Champs)
+    <div class="document-actions">
+        @if (Model.EstAdministrateur)
+        {
+            <a href="/administration" class="btn btn-outline-secondary">Retour aux demandes</a>
+            @if (demande.Statut == StatutsDemande.Soumise)
+            {
+                <form asp-controller="Administration" asp-action="Valider" asp-route-id="@demande.Id" method="post"><button class="btn btn-primary" type="submit">Valider la demande</button></form>
+            }
+        }
+        else
+        {
+            <a href="/" class="btn btn-outline-secondary">Retour au guichet</a>
+        }
+        <span class="small text-secondary">Téléchargement Word prévu à l'étape 4.</span>
+    </div>
+</article>

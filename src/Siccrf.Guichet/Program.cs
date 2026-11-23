@@ -1,4 +1,8 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
+using Siccrf.Guichet.Persistence;
+using Siccrf.Guichet.Features.Administration;
 using Siccrf.Guichet.Features.ComptesDemo;
 using Siccrf.Guichet.Features.Conversation;
 using Siccrf.Guichet.Features.Demandes;
@@ -33,8 +37,25 @@ builder.Services.AddHttpContextAccessor();
 builder.Services.AddScoped<CompteDemo>();
 builder.Services.AddScoped<BrouillonSession>();
 builder.Services.AddSingleton<FicheRegles>();
+builder.Services.AddSingleton(TimeProvider.System);
+builder.Services.AddScoped<SoumissionService>();
+builder.Services.AddScoped<ValidationService>();
+builder.Services.AddDbContext<GuichetDbContext>((services, options) =>
+{
+    var configuration = services.GetRequiredService<IConfiguration>();
+    var environnement = services.GetRequiredService<IWebHostEnvironment>();
+    var chemin = Path.GetFullPath(configuration["Database:Path"] ?? "App_Data/guichet.db", environnement.ContentRootPath);
+    Directory.CreateDirectory(Path.GetDirectoryName(chemin)!);
+    var connexion = new SqliteConnectionStringBuilder
+    {
+        DataSource = chemin, Pooling = configuration.GetValue("Database:Pooling", true), DefaultTimeout = 5
+    };
+    options.UseSqlite(connexion.ToString());
+});
 
 var app = builder.Build();
+await using (var scope = app.Services.CreateAsyncScope())
+    await scope.ServiceProvider.GetRequiredService<GuichetDbContext>().Database.MigrateAsync();
 
 if (!app.Environment.IsDevelopment())
     app.UseExceptionHandler("/erreur");

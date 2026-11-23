@@ -62,7 +62,8 @@ public sealed class EntretienGuideTests
         var reponse = _guide.PreparerReponse(fiche);
         Assert.Null(fiche.QuestionEnCours);
         Assert.Contains("Relisez", reponse);
-        Assert.DoesNotContain('?', reponse);
+        Assert.Contains("Confirmez-vous", reponse);
+        Assert.True(ConfirmationDemande.EnAttente(fiche));
     }
 
     [Fact]

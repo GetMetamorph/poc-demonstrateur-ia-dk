@@ -4,6 +4,7 @@
     ViewData["Title"] = "Décrire mon besoin";
     var clePresente = Albert.Value.ClePresente;
     var modele = Model.Fiche.ModeleAlbert ?? Albert.Value.Model;
+    var transmise = Model.Fiche.DemandeSoumiseId is not null;
 }
 <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 @if (TempData["Succes"] is string succes)
@@ -24,7 +25,7 @@
                 </button>
             </div>
         </div>
-        <div class="model-settings" data-configure="@clePresente.ToString().ToLowerInvariant()">
+        <div class="model-settings" data-configure="@clePresente.ToString().ToLowerInvariant()" data-transmise="@transmise.ToString().ToLowerInvariant()">
             @if (!clePresente)
             {
                 <p class="mb-0">La clé Albert doit être configurée localement côté serveur. Vous pouvez déjà renseigner la fiche manuellement.</p>
@@ -33,14 +34,14 @@
             {
                 <label for="modeles-list" class="form-label">Modèle de conversation</label>
                 <div class="d-flex gap-2">
-                    <select id="modeles-list" class="form-select form-select-sm" aria-describedby="modele-help">
+                    <select id="modeles-list" class="form-select form-select-sm" aria-describedby="modele-help" disabled="@transmise">
                         <option value="">Choisir un modèle</option>
                         @if (!string.IsNullOrWhiteSpace(modele))
                         {
                             <option value="@modele" selected>@modele</option>
                         }
                     </select>
-                    <button type="button" id="modeles-charger" class="btn btn-outline-secondary btn-sm">Actualiser</button>
+                    <button type="button" id="modeles-charger" class="btn btn-outline-secondary btn-sm" disabled="@transmise">Actualiser</button>
                 </div>
                 <small id="modele-help">Actualisez la liste pour découvrir les modèles accessibles à votre compte.</small>
             }
@@ -68,19 +69,30 @@
             <p id="chat-cible" class="small text-secondary" hidden="@(Model.Fiche.QuestionEnCours is null)">@(Model.Fiche.QuestionEnCours is { } question ? $"À préciser : {question.Libelle}" : "")</p>
             <textarea id="message" name="texte" class="form-control" rows="3" maxlength="4000" required
                       placeholder="Par exemple : nous ressaisissons chaque semaine les mêmes informations…"
-                      disabled="@(!clePresente)" aria-describedby="chat-help chat-keyboard"></textarea>
+                      disabled="@(!clePresente || transmise)" aria-describedby="chat-help chat-keyboard"></textarea>
             <div class="compose-footer">
                 <div><small id="chat-keyboard">Entrée pour envoyer · Maj+Entrée pour une nouvelle ligne</small><small id="chat-help">Les informations de cette session sont transmises à Albert.</small></div>
-                <button type="submit" id="chat-envoyer" class="btn btn-primary" disabled="@(!clePresente)"><span class="button-spinner" aria-hidden="true" hidden></span><span id="chat-send-label">Envoyer</span><span class="send-arrow" aria-hidden="true">↑</span></button>
+                <button type="submit" id="chat-envoyer" class="btn btn-primary" disabled="@(!clePresente || transmise)"><span class="button-spinner" aria-hidden="true" hidden></span><span id="chat-send-label">Envoyer</span><span class="send-arrow" aria-hidden="true">↑</span></button>
             </div>
             <p id="chat-status" class="small mt-3 mb-0" role="status" aria-live="polite"></p>
             <div id="chat-error" class="alert alert-warning mt-3 mb-0" role="alert" hidden></div>
         </form>
+        <div id="submission-controls" class="submission-controls" hidden="@transmise">
+            <p id="submission-hint" class="small text-secondary mb-2">@(Model.Manquants.Count == 0 ? "La fiche est complète. Relisez-la avant de confirmer l'envoi." : "La transmission sera possible lorsque les champs obligatoires seront renseignés.")</p>
+            <form asp-controller="Demandes" asp-action="Preparer" method="post">
+                <input type="hidden" name="revision" data-revision value="@Model.Fiche.Revision" />
+                <button id="review-button" type="submit" class="btn btn-primary" disabled="@(Model.Manquants.Count > 0)">Relire et transmettre</button>
+            </form>
+        </div>
+        <div id="submitted-notice" class="submission-controls" hidden="@(!transmise)" role="status">
+            <p class="text-success">Demande <strong id="submitted-reference">@Model.Fiche.ReferenceSoumise</strong> enregistrée avec le statut « Transmise ».</p>
+            <div class="document-actions"><a href="/demande/recapitulatif" class="btn btn-outline-primary">Consulter ma demande</a><form asp-controller="Demandes" asp-action="Nouvelle" method="post"><button type="submit" class="btn btn-primary">Nouvelle demande</button></form></div>
+        </div>
     </section>
     <section class="panel fiche-panel" id="fiche-panel" aria-labelledby="fiche-title" hidden>
         <div class="panel-header"><h2 id="fiche-title" tabindex="-1">Expression de besoin</h2><span class="badge text-bg-light">Brouillon</span></div>
         <div class="fiche-progress"><div class="d-flex justify-content-between"><span>Champs obligatoires renseignés</span><strong id="completion-count">@Model.NombreRenseignes / @Model.NombreObligatoires</strong></div><progress id="completion-progress" value="@Model.NombreRenseignes" max="@Model.NombreObligatoires" aria-label="Complétude de la fiche">@Model.Progression %</progress><small>Les obligations sont des règles du POC ; les rubriques facultatives ne bloquent pas l'envoi.</small></div>
-        <dl class="identity-grid"><div><dt>Demandeur</dt><dd>@CompteDemo.Demandeur</dd></div><div><dt>Bureau</dt><dd>@CompteDemo.Bureau</dd></div><div><dt>N° de demande</dt><dd>Attribué à la soumission</dd></div><div><dt>Date du brouillon (UTC)</dt><dd>@Model.Fiche.DateCreation.ToString("dd/MM/yyyy")</dd></div><div><dt>Valideur prévu (fictif)</dt><dd>@CompteDemo.Valideur</dd></div></dl>
+        <dl class="identity-grid"><div><dt>Demandeur</dt><dd>@CompteDemo.Demandeur</dd></div><div><dt>Bureau</dt><dd>@CompteDemo.Bureau</dd></div><div><dt>N° de demande</dt><dd>Attribué à la transmission</dd></div><div><dt>Date du brouillon (UTC)</dt><dd>@Model.Fiche.DateCreation.ToString("dd/MM/yyyy")</dd></div><div><dt>Valideur prévu (fictif)</dt><dd>@CompteDemo.Valideur</dd></div></dl>
         <div class="fiche-content">
             @foreach (var rubrique in FicheCatalogue.Champs.GroupBy(c => c.Rubrique))
             {
@@ -96,6 +108,7 @@
         <details class="edit-panel" id="corrections"><summary>Renseigner ou corriger la fiche</summary><p class="text-secondary mt-3">L'aperçu évolue pendant la saisie. Appliquez les corrections pour les conserver dans ce brouillon.</p>
             <form asp-controller="Demandes" asp-action="Corriger" method="post" id="correction-form">
                 <input type="hidden" name="revision" data-revision value="@Model.Fiche.Revision" />
+                <fieldset disabled="@transmise">
                 @foreach (var rubrique in FicheCatalogue.Champs.GroupBy(c => c.Rubrique))
                 {
                     <fieldset><legend>@rubrique.Key</legend>
@@ -107,6 +120,7 @@
                 }
                 <p id="unsaved" class="text-secondary" role="status" hidden>Corrections en cours — appliquez-les pour les conserver.</p>
                 <button type="submit" class="btn btn-primary">Appliquer les corrections</button>
+                </fieldset>
             </form>
         </details>
         <div class="submit-panel">
@@ -114,9 +128,8 @@
                 <summary id="missing-summary">@Model.Manquants.Count champ(s) obligatoire(s) à compléter</summary>
                 <ul class="missing-fields" id="missing-list">@foreach (var champ in Model.Manquants) { <li>@champ.Libelle</li> }</ul>
             </details>
-            <p id="complete-note" class="text-success" hidden="@(Model.Manquants.Count > 0)">Tous les champs obligatoires sont renseignés. Vous pouvez relire la fiche ; la confirmation et la soumission seront disponibles à l'étape 3.</p>
-            <p class="text-secondary small">La soumission et l'enregistrement SQLite seront ajoutés à l'étape 3. Ce brouillon reste temporaire : expiration après 2 heures d'inactivité ou au redémarrage du serveur.</p>
-            <button type="button" class="btn btn-primary w-100" disabled>Soumettre la demande</button>
+            <p id="complete-note" class="text-success" hidden="@(Model.Manquants.Count > 0)">Tous les champs obligatoires sont renseignés. Relisez la fiche puis confirmez explicitement sa transmission.</p>
+            <p class="text-secondary small">Le brouillon expire après 2 heures d'inactivité ou au redémarrage du serveur. Une demande transmise est enregistrée durablement dans SQLite.</p>
         </div>
     </section>
 </div>

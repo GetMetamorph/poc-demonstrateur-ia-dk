@@ -1,6 +1,8 @@
-# Prompt système proposé pour l'étape 2
+# Contrat conversationnel de l'étape 2
 
-Ce texte constitue le prompt à brancher avec Albert. Il n'est pas encore exécuté dans la version d'interface de l'étape 1. Le backend ajoute le catalogue, la fiche structurée et ses champs manquants dans un message de contexte distinct.
+Le prompt exécuté fait référence dans [`ChatPrompt.cs`](../src/Siccrf.Guichet/Features/Conversation/ChatPrompt.cs), au plus près du contrat C#. Le backend ajoute le catalogue, la fiche structurée et ses champs manquants dans un message système distinct, puis au maximum douze messages récents et le message courant. Le texte ci-dessous conserve la spécification de conception ; l'implémentation précise également que la soumission n'est pas encore disponible à l'étape 2.
+
+`ChatPropositionLecteur` refuse les propriétés supplémentaires, les propriétés JSON répétées, les modifications de champs inconnus ou répétés, les sources absentes du dernier message et les valeurs trop longues. `ConversationService` applique ensuite les règles de fiche avant toute écriture du brouillon. Une valeur JSON `null` efface le champ ; les champs omis ne sont pas modifiés. L'IA ne contrôle ni la complétude ni les statuts.
 
 ```text
 Tu es l'assistant du guichet d'expression de besoin de la DGCCRF/SICCRF.

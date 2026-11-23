@@ -1,4 +1,16 @@
-# Vérifications de l'étape 1
+# Vérifications du POC
+
+## Étape 2 du 23 novembre 2026
+
+La commande `dotnet test Siccrf.Guichet.slnx --no-restore -m:1 --nologo --verbosity minimal` a recompilé les projets puis exécuté **56 tests réussis**, zéro échec et zéro test ignoré, avec le SDK .NET 10.0.404. La compilation ne produit aucun avertissement. `node --check` valide la syntaxe de `conversation.js` ; `git diff --check` ne signale aucune erreur d'espacement.
+
+Les tests de l'étape 1 sont conservés. Les ajouts couvrent le contrat JSON strict et les doublons, les champs autorisés et leurs longueurs, les extraits sources, la découverte filtrée et mise en cache des modèles, le refus d'un modèle inventé, les mises à jour multiples, les corrections et effacements, les réponses tronquées, une seule réparation, l'absence de mutation en cas d'échec, les erreurs 401/403/404/422/429/503, Retry-After, l'annulation et la non-divulgation des secrets ou corps d'erreur.
+
+Dix tests d'intégration utilisent le véritable pipeline MVC avec WebApplicationFactory, sessions, antiforgery et transport HTTP Albert simulé. Ils vérifient la mise à jour de la fiche, la prise en compte d'une correction au tour suivant, le choix de modèle, le rejet d'une révision périmée, deux requêtes concurrentes, l'état après JSON invalide, le timeout 504, les sessions isolées, le refus du rôle administrateur et l'absence de soumission même sur une fiche complète suivie d'un « oui ».
+
+Aucune clé utilisateur n'a été fournie : **aucun appel Albert réel ni modèle disponible au compte n'a été validé**. Les identifiants des tests sont factices et ne figurent pas dans la configuration applicative. La documentation et la spécification OpenAPI 0.9.3 ont été consultées. Les nouveaux composants JavaScript ne sont pas encore vérifiés dans un navigateur interactif ; les vues sont compilées et testées en HTTP. Les étapes SQLite, confirmation, validation administrative et export Word restent à développer.
+
+## Historique de vérification de l'étape 1
 
 Exécutées le 23 novembre 2026 sur Linux avec SDK .NET 10.0.404 et ASP.NET Core 10.0.15. Les versions utilisées sont celles du SDK téléchargé depuis la distribution officielle Microsoft. Le projet cible net10.0 et accepte un SDK stable .NET 10 avec ses bandes de fonctionnalités ultérieures.
 

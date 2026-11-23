@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using Siccrf.Guichet.Features.ComptesDemo;
+using Siccrf.Guichet.Features.Conversation;
 using Siccrf.Guichet.Features.Demandes;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -7,6 +8,17 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllersWithViews(options =>
     options.Filters.Add(new AutoValidateAntiforgeryTokenAttribute()));
 builder.Services.AddDistributedMemoryCache();
+builder.Services.AddMemoryCache();
+builder.Services.AddSingleton<SessionVerrous>();
+builder.Services.Configure<AlbertOptions>(builder.Configuration.GetSection("Albert"));
+builder.Services.AddHttpClient("Albert", client => client.Timeout = Timeout.InfiniteTimeSpan)
+    .ConfigurePrimaryHttpMessageHandler(() => new HttpClientHandler { AllowAutoRedirect = false })
+    .RemoveAllLoggers();
+builder.Services.AddScoped<AlbertApiClient>();
+builder.Services.AddScoped<AlbertCatalogue>();
+builder.Services.AddSingleton<ChatPropositionLecteur>();
+builder.Services.AddScoped<IChatService, AlbertChatService>();
+builder.Services.AddScoped<ConversationService>();
 builder.Services.AddSession(options =>
 {
     options.Cookie.Name = "Siccrf.Demo";
@@ -38,6 +50,24 @@ app.Use(async (context, next) =>
 app.UseStaticFiles();
 app.UseRouting();
 app.UseSession();
+app.Use(async (context, next) =>
+{
+    var cookie = context.Request.Cookies["Siccrf.Demo"] ?? context.TraceIdentifier;
+    var verrou = context.RequestServices.GetRequiredService<SessionVerrous>().Pour(cookie);
+    await verrou.WaitAsync(context.RequestAborted);
+    try
+    {
+        // Charger après acquisition, et committer avant libération, pour éviter les états périmés.
+        await context.Session.LoadAsync(context.RequestAborted);
+        context.Response.Headers.CacheControl = "no-store";
+        await next();
+        await context.Session.CommitAsync(context.RequestAborted);
+    }
+    finally
+    {
+        verrou.Release();
+    }
+});
 app.MapControllers();
 app.Run();
 

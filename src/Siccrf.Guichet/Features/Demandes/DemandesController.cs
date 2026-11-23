@@ -19,13 +19,19 @@ public sealed class DemandesController(BrouillonSession brouillons, FicheRegles 
     }
 
     [HttpPost("/demande/corriger")]
-    [RequestSizeLimit(100_000)]
-    public IActionResult Corriger([FromForm] Dictionary<string, string?> champs)
+    [RequestSizeLimit(300_000)]
+    public IActionResult Corriger([FromForm] Dictionary<string, string?> champs, [FromForm] long? revision)
     {
         if (compte.EstAdministrateur)
             return StatusCode(StatusCodes.Status403Forbidden);
 
         var fiche = brouillons.Lire();
+        if (!ModelState.IsValid || revision != fiche.Revision)
+        {
+            ModelState.AddModelError("", "La fiche a changé ou le formulaire est invalide. Les valeurs courantes sont affichées ; relisez-les avant de corriger à nouveau.");
+            Response.StatusCode = StatusCodes.Status409Conflict;
+            return View(Vue, new DemandePage(fiche, regles.Manquants(fiche)));
+        }
         if (!regles.Appliquer(fiche, champs, out var erreurs))
         {
             foreach (var erreur in erreurs)
@@ -34,6 +40,7 @@ public sealed class DemandesController(BrouillonSession brouillons, FicheRegles 
             return View(Vue, new DemandePage(fiche, regles.Manquants(fiche)));
         }
 
+        fiche.Revision++;
         brouillons.Enregistrer(fiche);
         TempData["Succes"] = "Les corrections ont été appliquées au brouillon.";
         return RedirectToAction(nameof(Index));

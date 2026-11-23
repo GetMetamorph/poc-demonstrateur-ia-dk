@@ -67,7 +67,11 @@ public sealed class EntretienGuide(FicheRegles regles)
     public string PreparerReponse(FicheBrouillon fiche)
     {
         fiche.QuestionEnCours = QuestionSuivante(fiche);
-        return fiche.QuestionEnCours?.Texte ??
-            "Tous les champs obligatoires sont renseignés. Relisez la fiche à côté du chat ; vous pouvez encore corriger une information. La confirmation et la soumission seront disponibles à l'étape 3.";
+        if (fiche.QuestionEnCours is not null)
+        {
+            ConfirmationDemande.Annuler(fiche);
+            return fiche.QuestionEnCours.Texte;
+        }
+        return ConfirmationDemande.Preparer(fiche, regles, dansChat: true);
     }
 }

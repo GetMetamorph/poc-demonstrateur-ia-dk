@@ -121,3 +121,11 @@ button:focus-visible, a:focus-visible, summary:focus-visible { outline: 3px soli
 @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
 }
+
+.submission-controls { padding: 1rem 1.4rem; border-top: 1px solid var(--line); background: #f6f9ff; }
+.document-page { max-width: 980px; margin: 0 auto; }
+.document-page .panel-header h1 { font-size: 1.2rem; font-weight: 750; margin: 0; overflow-wrap: anywhere; }
+.document-intro, .confirmation-form { padding: 1.4rem; }
+.confirmation-form { border-top: 1px solid var(--line); background: #f5f8ff; }
+.document-actions { display: flex; gap: .7rem; flex-wrap: wrap; align-items: center; }
+.document-page > .document-actions { padding: 1.4rem; border-top: 1px solid var(--line); }

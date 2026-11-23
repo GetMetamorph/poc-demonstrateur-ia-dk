@@ -1,5 +1,17 @@
 # Vérifications du POC
 
+## Étape 3 du 23 novembre 2026
+
+Compilation et **95 tests .NET réussis**, zéro avertissement, zéro échec et zéro test ignoré, avec `dotnet test Siccrf.Guichet.slnx --no-restore -m:1 --nologo --verbosity minimal`. Le fournisseur EF Core SQLite 10.0.15 et la migration générée sont utilisés réellement ; les appels Albert restent simulés.
+
+Les nouveaux tests couvrent le refus d'une fiche incomplète, l'absence de question préalable ou d'accord, les phrases ambiguës, une révision périmée, la distinction confirmation par bouton/chat, la référence et les dates serveur, les rubriques facultatives vides, l'instantané figé et sa relecture depuis un autre contexte. Ils vérifient les nouvelles tentatives après perte de l'état de session, deux soumissions concurrentes sur deux contextes, une erreur d'écriture sur une base en lecture seule suivie d'une nouvelle tentative, ainsi que la date et l'auteur de validation conservés après un second clic.
+
+Sept parcours HTTP ajoutés testent le pipeline MVC avec antiforgery et SQLite : refus d'une fiche incomplète ; relecture sans accord et correction qui invalide la confirmation ; soumission par bouton puis consultation et validation admin ; doubles envois, fiche soumise figée et ancien formulaire après nouvelle demande ; confirmation explicite par chat sans appel au modèle ; refus dans le chat ; redémarrage du serveur sur le même fichier SQLite. Les brouillons sont absents du dashboard et les actions admin refusées au demandeur.
+
+Cinq contrôles DOM sur le rendu MVC et les scripts actuels ont aussi réussi : relecture bloquée sur fiche incomplète ; bouton et révision de relecture actualisés à complétude ; corrections non appliquées bloquantes ; référence et succès affichés avec fiche figée après soumission ; absence de nouvel envoi après soumission avec accès aux comptes et à une nouvelle demande. Les réponses sont simulées ; ces contrôles ne constituent pas une inspection visuelle du navigateur.
+
+Le démarrage Kestrel et l'application automatique de la migration ont été effectués. `node --check` valide les scripts et `git diff --check` ne signale pas d'erreur d'espacement. Le modèle Word est intact ; son export, l'essai Albert réel et la vérification visuelle complète restent à effectuer.
+
 ## Étape 2 du 23 novembre 2026
 
 La commande `dotnet test Siccrf.Guichet.slnx --no-restore -m:1 --nologo --verbosity minimal` a recompilé les projets puis exécuté **68 tests réussis**, zéro échec et zéro test ignoré, avec le SDK .NET 10.0.404. La compilation ne produit aucun avertissement. `node --check` valide la syntaxe de `conversation.js`, `chat-feedback.js` et `fiche.js` ; `git diff --check` ne signale aucune erreur d'espacement.

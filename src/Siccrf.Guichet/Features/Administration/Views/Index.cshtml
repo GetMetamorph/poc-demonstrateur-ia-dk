@@ -1,5 +1,21 @@
+@model IReadOnlyList<Demande>
 @{
     ViewData["Title"] = "Administration";
 }
 <div class="page-heading"><div><p class="eyebrow">ESPACE ADMINISTRATEUR FICTIF</p><h1>Demandes soumises</h1><p class="text-secondary">Connecté en démonstration : @CompteDemo.Valideur.</p></div></div>
-<section class="panel admin-panel" aria-labelledby="admin-title"><h2 id="admin-title">Suivi des expressions de besoin</h2><div class="table-responsive"><table class="table"><thead><tr><th scope="col">Identifiant</th><th scope="col">Intitulé</th><th scope="col">Demandeur</th><th scope="col">Date</th><th scope="col">Statut</th></tr></thead><tbody><tr><td colspan="5" class="empty-state"><strong>Aucune demande soumise</strong><p>Les brouillons ne figurent pas dans cette liste.</p><p>La consultation, le téléchargement Word et la validation seront raccordés à SQLite à l'étape 3 puis à l'export à l'étape 4.</p></td></tr></tbody></table></div></section>
+<section class="panel admin-panel" aria-labelledby="admin-title">
+    <h2 id="admin-title">@Model.Count demande(s) · Les plus récentes en premier</h2>
+    <div class="table-responsive"><table class="table align-middle">
+        <thead><tr><th scope="col">Identifiant</th><th scope="col">Intitulé</th><th scope="col">Demandeur</th><th scope="col">Date (Paris)</th><th scope="col">Statut</th></tr></thead>
+        <tbody>
+        @if (Model.Count == 0)
+        {
+            <tr><td colspan="5" class="empty-state"><strong>Aucune demande soumise</strong><p>Les brouillons ne figurent pas dans cette liste.</p></td></tr>
+        }
+        @foreach (var demande in Model)
+        {
+            <tr><td><a asp-controller="Administration" asp-action="Detail" asp-route-id="@demande.Id">@demande.Reference</a></td><td>@demande.Intitule</td><td>@demande.Demandeur</td><td>@DatesFrance.Afficher(demande.DateSoumissionUtc)</td><td><span class="badge @(demande.Statut == StatutsDemande.Validee ? "text-bg-success" : "text-bg-primary")">@demande.Statut</span></td></tr>
+        }
+        </tbody>
+    </table></div>
+</section>

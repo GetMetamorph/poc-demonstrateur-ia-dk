@@ -7,6 +7,8 @@ public sealed class ConversationService(IChatService chat, FicheRegles regles, E
     public async Task EnvoyerAsync(FicheBrouillon fiche, string texte, string modele,
         CancellationToken cancellationToken)
     {
+        if (fiche.DemandeSoumiseId is not null)
+            throw new DemandeException("Cette demande est déjà soumise. Créez une nouvelle demande pour poursuivre.");
         var contexte = new ChatContexte(fiche.Champs, regles.Manquants(fiche).Select(c => c.Cle).ToArray(),
             fiche.Messages, texte, entretien.QuestionCourante(fiche));
         var proposition = await chat.RepondreAsync(contexte, modele, cancellationToken);
@@ -15,12 +17,10 @@ public sealed class ConversationService(IChatService chat, FicheRegles regles, E
         if (!regles.Appliquer(fiche, changements, out _))
             throw AlbertApiClient.ReponseInvalide();
 
-        fiche.Messages.Add(new ChatMessage("user", texte));
+        ConfirmationDemande.Annuler(fiche);
+        fiche.Revision++;
         // Ne jamais afficher la relance libre du modèle : le guide couvre les champs
         // réellement manquants, y compris si Albert ne propose qu'une synthèse.
-        fiche.Messages.Add(new ChatMessage("assistant", entretien.PreparerReponse(fiche)));
-        if (fiche.Messages.Count > 12)
-            fiche.Messages.RemoveRange(0, fiche.Messages.Count - 12);
-        fiche.Revision++;
+        fiche.AjouterEchange(texte, entretien.PreparerReponse(fiche));
     }
 }

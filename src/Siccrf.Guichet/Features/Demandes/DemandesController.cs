@@ -1,11 +1,13 @@
 using Microsoft.AspNetCore.Mvc;
 using Siccrf.Guichet.Features.ComptesDemo;
 using Siccrf.Guichet.Features.Conversation;
+using Microsoft.EntityFrameworkCore;
+using Siccrf.Guichet.Persistence;
 
 namespace Siccrf.Guichet.Features.Demandes;
 
 public sealed class DemandesController(BrouillonSession brouillons, FicheRegles regles, CompteDemo compte,
-    EntretienGuide entretien)
+    EntretienGuide entretien, SoumissionService soumissions, GuichetDbContext db)
     : Controller
 {
     private const string Vue = "~/Features/Demandes/Views/Index.cshtml";
@@ -28,6 +30,8 @@ public sealed class DemandesController(BrouillonSession brouillons, FicheRegles 
             return StatusCode(StatusCodes.Status403Forbidden);
 
         var fiche = brouillons.Lire();
+        if (fiche.DemandeSoumiseId is not null)
+            return ErreurFiche(fiche, "Cette demande est déjà soumise. Vous pouvez créer une nouvelle demande.", 409);
         if (!ModelState.IsValid || revision != fiche.Revision)
         {
             ModelState.AddModelError("", "La fiche a changé ou le formulaire est invalide. Les valeurs courantes sont affichées ; relisez-les avant de corriger à nouveau.");
@@ -43,31 +47,92 @@ public sealed class DemandesController(BrouillonSession brouillons, FicheRegles 
         }
 
         fiche.Revision++;
+        ConfirmationDemande.Annuler(fiche);
         fiche.QuestionEnCours = entretien.QuestionCourante(fiche);
         brouillons.Enregistrer(fiche);
         TempData["Succes"] = "Les corrections ont été appliquées au brouillon.";
         return RedirectToAction(nameof(Index));
     }
 
-    [HttpPost("/demande/soumettre")]
-    public IActionResult Soumettre()
+    [HttpPost("/demande/preparer")]
+    public IActionResult Preparer([FromForm] long? revision)
     {
         if (compte.EstAdministrateur)
             return StatusCode(StatusCodes.Status403Forbidden);
-
         var fiche = brouillons.Lire();
-        if (!regles.EstComplete(fiche))
+        if (!ModelState.IsValid || revision != fiche.Revision)
+            return ErreurFiche(fiche, "La fiche a changé. Rechargez-la avant de préparer la confirmation.", 409);
+        try
         {
-            ModelState.AddModelError("", "La fiche est incomplète. Renseignez les champs obligatoires indiqués.");
-            Response.StatusCode = StatusCodes.Status400BadRequest;
+            ConfirmationDemande.Preparer(fiche, regles);
+            brouillons.Enregistrer(fiche);
+            return RedirectToAction(nameof(Relecture));
         }
-        else
+        catch (DemandeException exception)
         {
-            // Aucun envoi factice : confirmation et enregistrement seront ajoutés ensemble.
-            ModelState.AddModelError("", "La soumission sera disponible à l'étape 3, avec l'enregistrement SQLite.");
-            Response.StatusCode = StatusCodes.Status409Conflict;
+            return ErreurFiche(fiche, exception.Message, exception.Statut);
         }
+    }
 
+    [HttpGet("/demande/relecture")]
+    public IActionResult Relecture()
+    {
+        if (compte.EstAdministrateur)
+            return Redirect("/administration");
+        var fiche = brouillons.Lire();
+        if (!ConfirmationDemande.EnAttente(fiche) || !regles.EstComplete(fiche))
+            return RedirectToAction(nameof(Index));
+        return View("~/Features/Demandes/Views/Relecture.cshtml", fiche);
+    }
+
+    [HttpPost("/demande/soumettre")]
+    public async Task<IActionResult> Soumettre([FromForm] Guid brouillonId, [FromForm] long? revision,
+        [FromForm] bool confirme, CancellationToken cancellationToken)
+    {
+        if (compte.EstAdministrateur)
+            return StatusCode(StatusCodes.Status403Forbidden);
+        var fiche = brouillons.Lire();
+        if (!ModelState.IsValid)
+            return ErreurFiche(fiche, "Le formulaire de confirmation est invalide. Rechargez la fiche.", 400);
+        try
+        {
+            await soumissions.SoumettreAsync(fiche, brouillonId, revision, confirme, "Bouton", cancellationToken);
+            brouillons.Enregistrer(fiche);
+            return RedirectToAction(nameof(Recapitulatif));
+        }
+        catch (DemandeException exception)
+        {
+            return ErreurFiche(fiche, exception.Message, exception.Statut);
+        }
+    }
+
+    [HttpGet("/demande/recapitulatif")]
+    public async Task<IActionResult> Recapitulatif(CancellationToken cancellationToken)
+    {
+        var fiche = brouillons.Lire();
+        var demande = await db.Demandes.AsNoTracking().SingleOrDefaultAsync(
+            d => d.Id == fiche.DemandeSoumiseId && d.BrouillonId == fiche.Id, cancellationToken);
+        if (demande is null)
+            return RedirectToAction(nameof(Index));
+        return View("~/Features/Demandes/Views/Detail.cshtml", new DemandeDetail(demande, compte.EstAdministrateur));
+    }
+
+    [HttpPost("/demande/nouvelle")]
+    public IActionResult Nouvelle()
+    {
+        if (compte.EstAdministrateur)
+            return StatusCode(StatusCodes.Status403Forbidden);
+        var fiche = brouillons.Lire();
+        if (fiche.DemandeSoumiseId is null)
+            return BadRequest();
+        brouillons.Enregistrer(new FicheBrouillon { ModeleAlbert = fiche.ModeleAlbert });
+        return RedirectToAction(nameof(Index));
+    }
+
+    private IActionResult ErreurFiche(FicheBrouillon fiche, string message, int statut)
+    {
+        ModelState.AddModelError("", message);
+        Response.StatusCode = statut;
         return View(Vue, new DemandePage(fiche, regles.Manquants(fiche)));
     }
 

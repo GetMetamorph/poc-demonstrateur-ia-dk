@@ -14,6 +14,8 @@ import { ChatFeedback } from "./chat-feedback.js";
     const error = document.getElementById("chat-error");
     const status = document.getElementById("chat-status");
     const configured = document.querySelector(".model-settings").dataset.configure === "true";
+    let submitted = document.querySelector(".model-settings").dataset.soumise === "true";
+    let remaining = Number(document.getElementById("completion-progress").max) - Number(document.getElementById("completion-progress").value);
     const feedback = new ChatFeedback();
     let busy = false;
     let dirty = false;
@@ -21,11 +23,12 @@ import { ChatFeedback } from "./chat-feedback.js";
     let acceptedModel = select?.value || "";
 
     function refreshControls() {
-        send.disabled = !configured || busy || dirty || !acceptedModel || Date.now() < retryAt;
-        message.disabled = !configured || busy;
-        if (select) select.disabled = busy || dirty;
-        if (discover) discover.disabled = busy || dirty;
-        correction.querySelectorAll("textarea, button").forEach(control => { control.disabled = busy; });
+        send.disabled = submitted || !configured || busy || dirty || !acceptedModel || Date.now() < retryAt;
+        message.disabled = submitted || !configured || busy;
+        if (select) select.disabled = submitted || busy || dirty;
+        if (discover) discover.disabled = submitted || busy || dirty;
+        correction.querySelectorAll("textarea, button").forEach(control => { control.disabled = submitted || busy; });
+        document.getElementById("review-button").disabled = submitted || busy || dirty || remaining > 0;
         document.querySelectorAll(".role-switch button").forEach(control => { control.disabled = busy; });
     }
 
@@ -86,6 +89,14 @@ import { ChatFeedback } from "./chat-feedback.js";
     }
 
     function applyState(state) {
+        submitted = Boolean(state.demande);
+        remaining = state.manquants.length;
+        document.getElementById("submission-controls").hidden = submitted;
+        document.getElementById("submitted-notice").hidden = !submitted;
+        document.getElementById("submitted-reference").textContent = state.demande?.reference || "";
+        document.getElementById("submission-hint").textContent = remaining === 0
+            ? "La fiche est complète. Relisez-la avant de confirmer l'envoi."
+            : "La soumission sera possible lorsque les champs obligatoires seront renseignés.";
         document.querySelectorAll("[data-revision]").forEach(input => { input.value = state.revision; });
         document.querySelectorAll("[data-preview]").forEach(preview => {
             const value = state.champs[preview.dataset.preview] || "";
@@ -169,7 +180,7 @@ import { ChatFeedback } from "./chat-feedback.js";
 
     form.addEventListener("submit", event => {
         event.preventDefault();
-        if (busy || dirty || !acceptedModel || Date.now() < retryAt || !message.value.trim()) return;
+        if (submitted || busy || dirty || !acceptedModel || Date.now() < retryAt || !message.value.trim()) return;
         feedback.prepareAudio();
         run(async () => {
             applyState(await request("/conversation/messages", { texte: message.value.trim(), revision: revision() }));

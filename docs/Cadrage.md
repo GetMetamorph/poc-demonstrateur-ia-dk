@@ -1,6 +1,6 @@
 # POC SICCRF Guichet intelligent d'expression de besoin
 
-Ce cadrage s'appuie sur la lecture intégrale de `reference/FEB(1).docx`, de ses parties OOXML et de son rendu sur deux pages. Il décrit la cible. L'étape 1 est livrée ; l'étape 2 est maintenant implémentée avec transport Albert, découverte de modèles, validation JSON et tests simulés. Son essai avec une clé réelle reste à effectuer. Le MVP reste une seule application MVC .NET 10 ; le serveur conserve toutes les décisions métier.
+Ce cadrage s'appuie sur la lecture intégrale de `reference/FEB(1).docx`, de ses parties OOXML et de son rendu sur deux pages. Les étapes 1 à 3 sont implémentées : interface, conversation Albert, confirmation explicite, SQLite et validation administrative. L'essai Albert avec une clé réelle et l'export Word restent à effectuer. Le MVP reste une seule application MVC .NET 10 ; le serveur conserve toutes les décisions métier.
 
 ## 1 Analyse exhaustive du modèle
 
@@ -80,13 +80,13 @@ Un projet `Microsoft.NET.Sdk.Web` avec ASP.NET Core MVC `net10.0`, Razor, Bootst
 | Persistence | GuichetDbContext, mapping EF Core et migrations SQLite, une seule table métier. |
 | Views/Shared et wwwroot | Layout commun, Bootstrap, CSS et JavaScript. |
 
-Ces dossiers sont créés au fur et à mesure de leur implémentation. À l'étape 2, Demandes, Conversation, Administration et ComptesDemo sont présents ; Persistence et ExportWord restent prévus. Les classes concrètes sont injectées directement ; seule l'intégration IA justifie une interface fournisseur.
+Ces dossiers sont créés au fur et à mesure de leur implémentation. À l'étape 3, Demandes, Conversation, Administration, ComptesDemo et Persistence sont présents ; ExportWord reste prévu. Les classes concrètes sont injectées directement ; seule l'intégration IA justifie une interface fournisseur.
 
 ### Modèle et SQLite à l'étape 3
 
-`FicheBrouillon` contient les 17 valeurs et la date de création. Il reste en session serveur pendant la rédaction, avec expiration après deux heures d'inactivité ; un redémarrage efface ces brouillons. L'identité provient du compte fictif. Le futur état de conversation contiendra une révision, un petit historique borné et une éventuelle confirmation en attente.
+`FicheBrouillon` contient les valeurs de la fiche, un identifiant technique, la date de création, la révision, un historique borné et une éventuelle confirmation en attente, distincte pour le chat. Il reste en session serveur pendant la rédaction, avec expiration après deux heures d'inactivité ; un redémarrage efface ces brouillons. L'identité provient du compte fictif.
 
-`Demande` est un instantané immuable des informations soumises. Les valeurs métier correspondent aux clés du catalogue. Un `DbContext` direct suffit ; aucun repository supplémentaire.
+`Demande` est un instantané figé des informations soumises. Les valeurs métier correspondent aux clés du catalogue et sont conservées ensemble dans une colonne JSON validée, plutôt que dupliquer leur mapping dans dix-sept propriétés EF. Les identités, dates, statut et identifiant de déduplication ont leurs colonnes SQL. Un `DbContext` direct suffit ; aucun repository supplémentaire.
 
 | Colonnes de Demandes | Type SQLite et règle |
 | --- | --- |
@@ -97,14 +97,13 @@ Ces dossiers sont créés au fur et à mesure de leur implémentation. À l'éta
 | DateConfirmationUtc | TEXT NOT NULL ; confirmation effective. |
 | ModeConfirmation | TEXT NOT NULL ; Bouton ou Chat. |
 | Demandeur, Bureau, ValideurPrevu | TEXT NOT NULL ; instantanés des identités fictives. |
-| Application, Intitule, Synthese, SituationActuelle, Difficultes, Resultat, CriteresReussite, Beneficiaires, Processus, Benefices | TEXT NOT NULL ; contrôles métier côté serveur. |
-| Exemple, Solution, Liens, Echeance, Contraintes, References, PointsAClarifier | TEXT NULL ; aucune obligation pour l'envoi. |
+| ChampsJson | TEXT NOT NULL ; dictionnaire des rubriques validées par le catalogue. Dix champs obligatoires, sept rubriques non bloquantes ; le titre est lu dans l'instantané. |
 | Statut | TEXT NOT NULL ; contrainte CHECK dans Soumise ou Validée. |
 | DateValidationUtc, ValidePar | TEXT NULL ; tous deux renseignés lors de la transition Soumise vers Validée. |
 
 Utiliser des `DateTime` UTC pour les horodatages persistés et le tri EF/SQLite. Présenter les dates dans le fuseau Europe/Paris. Le format public est calculé depuis l'Id et l'année de soumission dans ce fuseau : `EB-{annee}-{id:0000}`. La séquence est globale, sans remise à zéro annuelle ; elle reste unique. Le mot « Référence » peut être une propriété calculée, sans colonne dupliquée.
 
-Soumission dans une transaction : revalider la fiche, vérifier la confirmation de la bonne révision, insérer l'instantané, puis nettoyer le brouillon après commit. L'unicité de BrouillonId rend les doubles clics et nouvelles tentatives idempotents. Aucun faux message de succès avant le commit. Validation admin atomique uniquement depuis Soumise ; une seconde validation ne remplace pas la date ni l'auteur initiaux.
+Soumission avec le commit EF Core : revalider la fiche, vérifier la confirmation de la bonne révision, insérer l'instantané, puis marquer le brouillon soumis après commit. L'unicité de BrouillonId rend les doubles clics et nouvelles tentatives idempotents. Le brouillon soumis est figé jusqu'au démarrage explicite d'une nouvelle demande. Aucun faux message de succès avant le commit. Validation admin atomique uniquement depuis Soumise ; une seconde validation ne remplace pas la date ni l'auteur initiaux.
 
 ### Export Word à l'étape 4
 
@@ -190,7 +189,7 @@ Les logs restent techniques : code HTTP, durée et identifiant de corrélation ;
 | 4 Word | Copie balisée du modèle, Open XML SDK, export depuis détail et téléchargement | Étape 3 et modèle original | DOCX ouvert et inspecté, logo/rubriques conservés, valeurs et confirmation exactes, bon statut informatif, texte long sans troncature. |
 | 5 Vérification de démonstration | Tests des transitions et reprises, contrôle du scénario complet, instructions de lancement mises à jour | Étapes 1 à 4 | Demande libre fictive → corrections → relecture → confirmation → Soumise → détail → Word → Validée ; essais timeout, JSON invalide, manque obligatoire et double soumission. |
 
-L'étape 1 n'implémente donc pas encore Albert, SQLite ou l'export. Elle les prépare sans simuler de réussite. Le premier parcours complet est obtenu à l'étape 4 ; les fonctionnalités facultatives attendent ce résultat.
+Les étapes 1 à 3 sont implémentées. Le parcours sans export peut déjà être démontré, avec remplissage manuel sans clé ou conversation Albert configurée. Le téléchargement Word reste à l'étape 4 ; les fonctionnalités facultatives attendent le parcours complet.
 
 ## 6 Vérifications et limites de la livraison
 

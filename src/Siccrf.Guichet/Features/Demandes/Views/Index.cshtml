@@ -1,0 +1,67 @@
+@model DemandePage
+@{
+    ViewData["Title"] = "Décrire mon besoin";
+}
+<div class="page-heading">
+    <div><p class="eyebrow">DEMANDE D'ÉVOLUTION DU SYSTÈME D'INFORMATION</p><h1>Votre besoin, simplement.</h1><p class="text-secondary">Décrivez votre situation. Construisons une fiche claire, à votre rythme.</p></div>
+    <span class="badge rounded-pill text-bg-light draft-badge">Brouillon temporaire</span>
+</div>
+<div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
+@if (TempData["Succes"] is string succes)
+{
+    <div class="alert alert-success" role="status">@succes</div>
+}
+<div class="workspace-grid">
+    <section class="panel chat-panel" aria-labelledby="chat-title">
+        <div class="panel-header"><div><p class="eyebrow">VOTRE ASSISTANT</p><h2 id="chat-title">Parlons de votre besoin</h2></div><span class="badge text-bg-light">Albert · prochaine étape</span></div>
+        <div class="chat-messages" role="log" aria-label="Conversation">
+            <div class="assistant-message"><span class="assistant-avatar" aria-hidden="true">A</span><div><strong>Assistant SICCRF</strong><p>Bonjour @CompteDemo.Demandeur ! Je vous aiderai à décrire votre besoin et à préparer votre fiche d'expression de besoin.</p><p>Quel problème rencontrez-vous dans votre travail, et qu'aimeriez-vous améliorer ?</p></div></div>
+            <div class="chat-notice"><strong>Première version de l'interface</strong><p>La connexion à Albert sera ajoutée à l'étape 2. Vous pouvez déjà renseigner et corriger la fiche à droite pour vérifier les rubriques et les champs manquants.</p></div>
+        </div>
+        <div class="chat-compose"><label for="message" class="form-label">Votre message</label><textarea id="message" class="form-control" rows="3" placeholder="Par exemple : nous ressaisissons chaque semaine les mêmes informations…" disabled aria-describedby="chat-help"></textarea><div class="compose-footer"><small id="chat-help" class="text-secondary">Conversation disponible après raccordement à Albert.</small><button type="button" class="btn btn-primary" disabled>Envoyer</button></div></div>
+    </section>
+    <section class="panel fiche-panel" aria-labelledby="fiche-title">
+        <div class="panel-header"><div><p class="eyebrow">APERÇU DE VOTRE FICHE</p><h2 id="fiche-title">Expression de besoin</h2></div><span class="badge text-bg-light">Modèle FEB</span></div>
+        <div class="fiche-progress"><div class="d-flex justify-content-between"><span>Champs obligatoires renseignés</span><strong>@Model.NombreRenseignes / @Model.NombreObligatoires</strong></div><progress value="@Model.NombreRenseignes" max="@Model.NombreObligatoires" aria-label="Complétude de la fiche">@Model.Progression %</progress><small>Les obligations sont des règles du POC ; les rubriques facultatives ne bloquent pas l'envoi.</small></div>
+        <dl class="identity-grid"><div><dt>Demandeur</dt><dd>@CompteDemo.Demandeur</dd></div><div><dt>Bureau</dt><dd>@CompteDemo.Bureau</dd></div><div><dt>N° de demande</dt><dd>Attribué à la soumission</dd></div><div><dt>Date du brouillon (UTC)</dt><dd>@Model.Fiche.DateCreation.ToString("dd/MM/yyyy")</dd></div><div><dt>Valideur prévu (fictif)</dt><dd>@CompteDemo.Valideur</dd></div></dl>
+        <div class="fiche-content">
+            @foreach (var rubrique in FicheCatalogue.Champs.GroupBy(c => c.Rubrique))
+            {
+                <section class="fiche-section"><h3>@rubrique.Key</h3>
+                    @foreach (var champ in rubrique)
+                    {
+                        var valeur = Model.Fiche.Champs.GetValueOrDefault(champ.Cle);
+                        <div class="preview-field"><h4>@champ.Libelle @if (champ.Obligatoire) { <span class="required-dot" title="Obligatoire pour le POC">*</span> }</h4><p data-preview="@champ.Cle" class="@(string.IsNullOrWhiteSpace(valeur) ? "field-empty" : "")">@(string.IsNullOrWhiteSpace(valeur) ? "À préciser" : valeur)</p></div>
+                    }
+                </section>
+            }
+        </div>
+        <details class="edit-panel" id="corrections"><summary>Renseigner ou corriger la fiche</summary><p class="text-secondary mt-3">L'aperçu évolue pendant la saisie. Appliquez les corrections pour les conserver dans ce brouillon.</p>
+            <form asp-controller="Demandes" asp-action="Corriger" method="post" id="correction-form">
+                @foreach (var rubrique in FicheCatalogue.Champs.GroupBy(c => c.Rubrique))
+                {
+                    <fieldset><legend>@rubrique.Key</legend>
+                        @foreach (var champ in rubrique)
+                        {
+                            <div class="mb-3"><label for="champ-@champ.Cle" class="form-label">@champ.Libelle @(champ.Obligatoire ? "*" : "(facultatif)")</label><textarea id="champ-@champ.Cle" name="champs[@champ.Cle]" data-field="@champ.Cle" class="form-control" maxlength="@champ.LongueurMax" rows="2" aria-describedby="aide-@champ.Cle">@Model.Fiche.Champs.GetValueOrDefault(champ.Cle)</textarea><small id="aide-@champ.Cle" class="form-text">@champ.Aide</small></div>
+                        }
+                    </fieldset>
+                }
+                <p id="unsaved" class="text-secondary" role="status" hidden>Corrections en cours — appliquez-les pour les conserver.</p>
+                <button type="submit" class="btn btn-primary">Appliquer les corrections</button>
+            </form>
+        </details>
+        <div class="submit-panel">
+            @if (Model.Manquants.Count > 0)
+            {
+                <details><summary>@Model.Manquants.Count champ(s) obligatoire(s) à compléter</summary><ul class="missing-fields">@foreach (var champ in Model.Manquants) { <li>@champ.Libelle</li> }</ul></details>
+            }
+            else
+            {
+                <p class="text-success">Tous les champs obligatoires sont renseignés. La relecture et la confirmation seront disponibles à l'étape 3.</p>
+            }
+            <p class="text-secondary small">La soumission et l'enregistrement SQLite seront ajoutés à l'étape 3. Ce brouillon reste temporaire : expiration après 2 heures d'inactivité ou au redémarrage du serveur.</p>
+            <button type="button" class="btn btn-primary w-100" disabled>Soumettre la demande</button>
+        </div>
+    </section>
+</div>

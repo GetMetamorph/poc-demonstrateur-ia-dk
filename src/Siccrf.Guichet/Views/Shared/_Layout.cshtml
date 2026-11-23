@@ -8,12 +8,12 @@
     <link rel="stylesheet" href="~/lib/bootstrap/bootstrap.min.css" asp-append-version="true" />
     <link rel="stylesheet" href="~/css/site.css" asp-append-version="true" />
     <script src="~/js/fiche.js" asp-append-version="true" defer></script>
+    <script src="~/js/conversation.js" asp-append-version="true" type="module"></script>
 </head>
 <body>
-    <div class="demo-banner">DÉMONSTRATEUR · Comptes fictifs · Utiliser uniquement des données fictives</div>
     <header class="app-header">
         <nav class="container-fluid navbar" aria-label="Navigation principale">
-            <a href="/" class="brand"><span class="brand-mark" aria-hidden="true">S</span><span>Guichet SICCRF<small>Expression de besoin</small></span></a>
+            <a href="/" class="brand"><span class="brand-mark" aria-hidden="true">S</span><span>Guichet SICCRF</span></a>
             <form asp-controller="ComptesDemo" asp-action="Changer" method="post" class="role-switch">
                 <span class="role-label">Mode démo</span>
                 <button name="role" value="demandeur" class="btn btn-sm @(!Compte.EstAdministrateur ? "btn-primary" : "btn-outline-secondary")" aria-pressed="@((!Compte.EstAdministrateur).ToString().ToLowerInvariant())">Demandeur</button>
@@ -24,6 +24,6 @@
     <main class="container-fluid app-main" id="contenu">
         @RenderBody()
     </main>
-    <footer class="app-footer">DGCCRF / SICCRF · POC · Étape 1 — interface et règles de fiche · Sans authentification réelle</footer>
+    <footer class="app-footer">Mode démo · Comptes fictifs · Données fictives uniquement · Sans authentification réelle</footer>
 </body>
 </html>

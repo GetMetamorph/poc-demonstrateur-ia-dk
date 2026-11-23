@@ -1,6 +1,6 @@
 # POC SICCRF Guichet intelligent d'expression de besoin
 
-Ce cadrage s'appuie sur la lecture intégrale de `reference/FEB(1).docx`, de ses parties OOXML et de son rendu sur deux pages. Il décrit la cible et distingue ce qui est livré à l'étape 1. Le MVP sera une seule application MVC .NET 10 ; l'IA proposera du texte structuré et le serveur conservera toutes les décisions métier.
+Ce cadrage s'appuie sur la lecture intégrale de `reference/FEB(1).docx`, de ses parties OOXML et de son rendu sur deux pages. Il décrit la cible. L'étape 1 est livrée ; l'étape 2 est maintenant implémentée avec transport Albert, découverte de modèles, validation JSON et tests simulés. Son essai avec une clé réelle reste à effectuer. Le MVP reste une seule application MVC .NET 10 ; le serveur conserve toutes les décisions métier.
 
 ## 1 Analyse exhaustive du modèle
 
@@ -80,7 +80,7 @@ Un projet `Microsoft.NET.Sdk.Web` avec ASP.NET Core MVC `net10.0`, Razor, Bootst
 | Persistence | GuichetDbContext, mapping EF Core et migrations SQLite, une seule table métier. |
 | Views/Shared et wwwroot | Layout commun, Bootstrap, CSS et JavaScript. |
 
-Ces dossiers sont créés au fur et à mesure de leur implémentation. À l'étape 1, seuls Demandes, Administration et ComptesDemo sont présents. Les classes concrètes sont injectées directement ; seule l'intégration IA justifie immédiatement une interface fournisseur.
+Ces dossiers sont créés au fur et à mesure de leur implémentation. À l'étape 2, Demandes, Conversation, Administration et ComptesDemo sont présents ; Persistence et ExportWord restent prévus. Les classes concrètes sont injectées directement ; seule l'intégration IA justifie une interface fournisseur.
 
 ### Modèle et SQLite à l'étape 3
 

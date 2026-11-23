@@ -33,6 +33,8 @@ public sealed class FicheRegles
             var texte = valeur?.Trim() ?? "";
             if (texte.Length > champ.LongueurMax)
                 problemes.Add($"{champ.Libelle} : {champ.LongueurMax} caractères maximum.");
+            else if (texte.Any(c => char.IsControl(c) && c is not ('\r' or '\n' or '\t')))
+                problemes.Add($"{champ.Libelle} : le texte contient des caractères de contrôle interdits.");
             else
                 valeurs[cle] = texte;
         }

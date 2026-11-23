@@ -1,28 +1,85 @@
 @model DemandePage
+@inject Microsoft.Extensions.Options.IOptions<Siccrf.Guichet.Features.Conversation.AlbertOptions> Albert
 @{
     ViewData["Title"] = "Décrire mon besoin";
+    var clePresente = Albert.Value.ClePresente;
+    var modele = Model.Fiche.ModeleAlbert ?? Albert.Value.Model;
 }
-<div class="page-heading">
-    <div><p class="eyebrow">DEMANDE D'ÉVOLUTION DU SYSTÈME D'INFORMATION</p><h1>Votre besoin, simplement.</h1><p class="text-secondary">Décrivez votre situation. Construisons une fiche claire, à votre rythme.</p></div>
-    <span class="badge rounded-pill text-bg-light draft-badge">Brouillon temporaire</span>
-</div>
 <div asp-validation-summary="All" class="alert alert-danger" role="alert"></div>
 @if (TempData["Succes"] is string succes)
 {
     <div class="alert alert-success" role="status">@succes</div>
 }
-<div class="workspace-grid">
+<div class="workspace-grid" id="workspace">
     <section class="panel chat-panel" aria-labelledby="chat-title">
-        <div class="panel-header"><div><p class="eyebrow">VOTRE ASSISTANT</p><h2 id="chat-title">Parlons de votre besoin</h2></div><span class="badge text-bg-light">Albert · prochaine étape</span></div>
-        <div class="chat-messages" role="log" aria-label="Conversation">
-            <div class="assistant-message"><span class="assistant-avatar" aria-hidden="true">A</span><div><strong>Assistant SICCRF</strong><p>Bonjour @CompteDemo.Demandeur ! Je vous aiderai à décrire votre besoin et à préparer votre fiche d'expression de besoin.</p><p>Quel problème rencontrez-vous dans votre travail, et qu'aimeriez-vous améliorer ?</p></div></div>
-            <div class="chat-notice"><strong>Première version de l'interface</strong><p>La connexion à Albert sera ajoutée à l'étape 2. Vous pouvez déjà renseigner et corriger la fiche à droite pour vérifier les rubriques et les champs manquants.</p></div>
+        <div class="panel-header chat-header">
+            <div class="assistant-identity">
+                <span class="assistant-avatar" aria-hidden="true">A</span>
+                <div><h1 id="chat-title">Assistant SICCRF</h1><span class="assistant-status" id="assistant-status"><span class="activity-dot" aria-hidden="true"></span><span id="assistant-status-label">Prêt à vous aider</span></span></div>
+            </div>
+            <div class="chat-actions">
+                <button type="button" id="chat-sound" class="btn btn-quiet" aria-pressed="true">Son activé</button>
+                <button type="button" id="fiche-toggle" class="btn btn-outline-primary" aria-expanded="false" aria-controls="fiche-panel">
+                    <span id="fiche-toggle-label">Afficher la fiche</span><span class="completion-pill" id="fiche-toggle-count">@Model.NombreRenseignes/@Model.NombreObligatoires</span>
+                </button>
+            </div>
         </div>
-        <div class="chat-compose"><label for="message" class="form-label">Votre message</label><textarea id="message" class="form-control" rows="3" placeholder="Par exemple : nous ressaisissons chaque semaine les mêmes informations…" disabled aria-describedby="chat-help"></textarea><div class="compose-footer"><small id="chat-help" class="text-secondary">Conversation disponible après raccordement à Albert.</small><button type="button" class="btn btn-primary" disabled>Envoyer</button></div></div>
+        <div class="model-settings" data-configure="@clePresente.ToString().ToLowerInvariant()">
+            @if (!clePresente)
+            {
+                <p class="mb-0">La clé Albert doit être configurée localement côté serveur. Vous pouvez déjà renseigner la fiche manuellement.</p>
+            }
+            else
+            {
+                <label for="modeles-list" class="form-label">Modèle de conversation</label>
+                <div class="d-flex gap-2">
+                    <select id="modeles-list" class="form-select form-select-sm" aria-describedby="modele-help">
+                        <option value="">Choisir un modèle</option>
+                        @if (!string.IsNullOrWhiteSpace(modele))
+                        {
+                            <option value="@modele" selected>@modele</option>
+                        }
+                    </select>
+                    <button type="button" id="modeles-charger" class="btn btn-outline-secondary btn-sm">Actualiser</button>
+                </div>
+                <small id="modele-help">Actualisez la liste pour découvrir les modèles accessibles à votre compte.</small>
+            }
+        </div>
+        <div class="chat-messages" role="log" aria-label="Conversation" aria-live="polite">
+            <div class="assistant-message"><div><p>Bonjour @CompteDemo.Demandeur ! Quel problème rencontrez-vous dans votre travail, et qu'aimeriez-vous améliorer ?</p></div></div>
+            <div id="chat-history">
+                @foreach (var message in Model.Fiche.Messages)
+                {
+                    <div class="history-message @(message.Role == "user" ? "user-message" : "assistant-reply")">
+                        <strong>@(message.Role == "user" ? "Vous" : "Assistant SICCRF")</strong>
+                        <p>@message.Content</p>
+                    </div>
+                }
+            </div>
+            <div id="chat-pending" class="history-message user-message" hidden><strong>Vous</strong><p id="chat-pending-text"></p></div>
+            <div id="chat-working" class="working-message" hidden>
+                <span class="working-spinner" aria-hidden="true"></span>
+                <div><strong>Albert prépare sa réponse</strong><p>Analyse de votre message et préparation de la fiche<span class="typing-dots" aria-hidden="true"><span>.</span><span>.</span><span>.</span></span></p></div>
+            </div>
+        </div>
+        <form asp-controller="Conversation" asp-action="Envoyer" method="post" class="chat-compose" id="chat-form">
+            <input type="hidden" name="revision" data-revision value="@Model.Fiche.Revision" />
+            <label for="message" class="form-label">Votre message</label>
+            <p id="chat-cible" class="small text-secondary" hidden="@(Model.Fiche.QuestionEnCours is null)">@(Model.Fiche.QuestionEnCours is { } question ? $"À préciser : {question.Libelle}" : "")</p>
+            <textarea id="message" name="texte" class="form-control" rows="3" maxlength="4000" required
+                      placeholder="Par exemple : nous ressaisissons chaque semaine les mêmes informations…"
+                      disabled="@(!clePresente)" aria-describedby="chat-help chat-keyboard"></textarea>
+            <div class="compose-footer">
+                <div><small id="chat-keyboard">Entrée pour envoyer · Maj+Entrée pour une nouvelle ligne</small><small id="chat-help">Les informations de cette session sont transmises à Albert.</small></div>
+                <button type="submit" id="chat-envoyer" class="btn btn-primary" disabled="@(!clePresente)"><span class="button-spinner" aria-hidden="true" hidden></span><span id="chat-send-label">Envoyer</span><span class="send-arrow" aria-hidden="true">↑</span></button>
+            </div>
+            <p id="chat-status" class="small mt-3 mb-0" role="status" aria-live="polite"></p>
+            <div id="chat-error" class="alert alert-warning mt-3 mb-0" role="alert" hidden></div>
+        </form>
     </section>
-    <section class="panel fiche-panel" aria-labelledby="fiche-title">
-        <div class="panel-header"><div><p class="eyebrow">APERÇU DE VOTRE FICHE</p><h2 id="fiche-title">Expression de besoin</h2></div><span class="badge text-bg-light">Modèle FEB</span></div>
-        <div class="fiche-progress"><div class="d-flex justify-content-between"><span>Champs obligatoires renseignés</span><strong>@Model.NombreRenseignes / @Model.NombreObligatoires</strong></div><progress value="@Model.NombreRenseignes" max="@Model.NombreObligatoires" aria-label="Complétude de la fiche">@Model.Progression %</progress><small>Les obligations sont des règles du POC ; les rubriques facultatives ne bloquent pas l'envoi.</small></div>
+    <section class="panel fiche-panel" id="fiche-panel" aria-labelledby="fiche-title" hidden>
+        <div class="panel-header"><h2 id="fiche-title" tabindex="-1">Expression de besoin</h2><span class="badge text-bg-light">Brouillon</span></div>
+        <div class="fiche-progress"><div class="d-flex justify-content-between"><span>Champs obligatoires renseignés</span><strong id="completion-count">@Model.NombreRenseignes / @Model.NombreObligatoires</strong></div><progress id="completion-progress" value="@Model.NombreRenseignes" max="@Model.NombreObligatoires" aria-label="Complétude de la fiche">@Model.Progression %</progress><small>Les obligations sont des règles du POC ; les rubriques facultatives ne bloquent pas l'envoi.</small></div>
         <dl class="identity-grid"><div><dt>Demandeur</dt><dd>@CompteDemo.Demandeur</dd></div><div><dt>Bureau</dt><dd>@CompteDemo.Bureau</dd></div><div><dt>N° de demande</dt><dd>Attribué à la soumission</dd></div><div><dt>Date du brouillon (UTC)</dt><dd>@Model.Fiche.DateCreation.ToString("dd/MM/yyyy")</dd></div><div><dt>Valideur prévu (fictif)</dt><dd>@CompteDemo.Valideur</dd></div></dl>
         <div class="fiche-content">
             @foreach (var rubrique in FicheCatalogue.Champs.GroupBy(c => c.Rubrique))
@@ -38,6 +95,7 @@
         </div>
         <details class="edit-panel" id="corrections"><summary>Renseigner ou corriger la fiche</summary><p class="text-secondary mt-3">L'aperçu évolue pendant la saisie. Appliquez les corrections pour les conserver dans ce brouillon.</p>
             <form asp-controller="Demandes" asp-action="Corriger" method="post" id="correction-form">
+                <input type="hidden" name="revision" data-revision value="@Model.Fiche.Revision" />
                 @foreach (var rubrique in FicheCatalogue.Champs.GroupBy(c => c.Rubrique))
                 {
                     <fieldset><legend>@rubrique.Key</legend>
@@ -52,14 +110,11 @@
             </form>
         </details>
         <div class="submit-panel">
-            @if (Model.Manquants.Count > 0)
-            {
-                <details><summary>@Model.Manquants.Count champ(s) obligatoire(s) à compléter</summary><ul class="missing-fields">@foreach (var champ in Model.Manquants) { <li>@champ.Libelle</li> }</ul></details>
-            }
-            else
-            {
-                <p class="text-success">Tous les champs obligatoires sont renseignés. La relecture et la confirmation seront disponibles à l'étape 3.</p>
-            }
+            <details id="missing-details" hidden="@(Model.Manquants.Count == 0)">
+                <summary id="missing-summary">@Model.Manquants.Count champ(s) obligatoire(s) à compléter</summary>
+                <ul class="missing-fields" id="missing-list">@foreach (var champ in Model.Manquants) { <li>@champ.Libelle</li> }</ul>
+            </details>
+            <p id="complete-note" class="text-success" hidden="@(Model.Manquants.Count > 0)">Tous les champs obligatoires sont renseignés. Vous pouvez relire la fiche ; la confirmation et la soumission seront disponibles à l'étape 3.</p>
             <p class="text-secondary small">La soumission et l'enregistrement SQLite seront ajoutés à l'étape 3. Ce brouillon reste temporaire : expiration après 2 heures d'inactivité ou au redémarrage du serveur.</p>
             <button type="button" class="btn btn-primary w-100" disabled>Soumettre la demande</button>
         </div>

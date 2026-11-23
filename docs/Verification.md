@@ -2,13 +2,15 @@
 
 ## Étape 3 du 23 novembre 2026
 
-Compilation et **95 tests .NET réussis**, zéro avertissement, zéro échec et zéro test ignoré, avec `dotnet test Siccrf.Guichet.slnx --no-restore -m:1 --nologo --verbosity minimal`. Le fournisseur EF Core SQLite 10.0.15 et la migration générée sont utilisés réellement ; les appels Albert restent simulés.
+Le vocabulaire affiché utilise « Transmettre / Transmise ». Les tests vérifient aussi le nouveau formulaire, l’accord « Je confirme la transmission » et l’affichage « Transmise » pour une demande déjà stockée avec son code historique.
 
-Les nouveaux tests couvrent le refus d'une fiche incomplète, l'absence de question préalable ou d'accord, les phrases ambiguës, une révision périmée, la distinction confirmation par bouton/chat, la référence et les dates serveur, les rubriques facultatives vides, l'instantané figé et sa relecture depuis un autre contexte. Ils vérifient les nouvelles tentatives après perte de l'état de session, deux soumissions concurrentes sur deux contextes, une erreur d'écriture sur une base en lecture seule suivie d'une nouvelle tentative, ainsi que la date et l'auteur de validation conservés après un second clic.
+Compilation et **96 tests .NET réussis**, zéro avertissement, zéro échec et zéro test ignoré, avec `dotnet test Siccrf.Guichet.slnx --no-restore -m:1 --nologo --verbosity minimal`. Le fournisseur EF Core SQLite 10.0.15 et la migration générée sont utilisés réellement ; les appels Albert restent simulés.
 
-Sept parcours HTTP ajoutés testent le pipeline MVC avec antiforgery et SQLite : refus d'une fiche incomplète ; relecture sans accord et correction qui invalide la confirmation ; soumission par bouton puis consultation et validation admin ; doubles envois, fiche soumise figée et ancien formulaire après nouvelle demande ; confirmation explicite par chat sans appel au modèle ; refus dans le chat ; redémarrage du serveur sur le même fichier SQLite. Les brouillons sont absents du dashboard et les actions admin refusées au demandeur.
+Les nouveaux tests couvrent le refus d'une fiche incomplète, l'absence de question préalable ou d'accord, les phrases ambiguës, une révision périmée, la distinction confirmation par bouton/chat, la référence et les dates serveur, les rubriques facultatives vides, l'instantané figé et sa relecture depuis un autre contexte. Ils vérifient les nouvelles tentatives après perte de l'état de session, deux transmissions concurrentes sur deux contextes, une erreur d'écriture sur une base en lecture seule suivie d'une nouvelle tentative, ainsi que la date et l'auteur de validation conservés après un second clic.
 
-Cinq contrôles DOM sur le rendu MVC et les scripts actuels ont aussi réussi : relecture bloquée sur fiche incomplète ; bouton et révision de relecture actualisés à complétude ; corrections non appliquées bloquantes ; référence et succès affichés avec fiche figée après soumission ; absence de nouvel envoi après soumission avec accès aux comptes et à une nouvelle demande. Les réponses sont simulées ; ces contrôles ne constituent pas une inspection visuelle du navigateur.
+Sept parcours HTTP ajoutés testent le pipeline MVC avec antiforgery et SQLite : refus d'une fiche incomplète ; relecture sans accord et correction qui invalide la confirmation ; transmission par bouton puis consultation et validation admin ; doubles envois, fiche transmise figée et ancien formulaire après nouvelle demande ; confirmation explicite par chat sans appel au modèle ; refus dans le chat ; redémarrage du serveur sur le même fichier SQLite. Les brouillons sont absents du dashboard et les actions admin refusées au demandeur.
+
+Cinq contrôles DOM sur le rendu MVC et les scripts actuels ont aussi réussi : relecture bloquée sur fiche incomplète ; bouton et révision de relecture actualisés à complétude ; corrections non appliquées bloquantes ; référence et succès affichés avec fiche figée après transmission ; absence de nouvel envoi après transmission avec accès aux comptes et à une nouvelle demande. Les réponses sont simulées ; ces contrôles ne constituent pas une inspection visuelle du navigateur.
 
 Le démarrage Kestrel et l'application automatique de la migration ont été effectués. `node --check` valide les scripts et `git diff --check` ne signale pas d'erreur d'espacement. Le modèle Word est intact ; son export, l'essai Albert réel et la vérification visuelle complète restent à effectuer.
 
@@ -18,7 +20,7 @@ La commande `dotnet test Siccrf.Guichet.slnx --no-restore -m:1 --nologo --verbos
 
 Les tests de l'étape 1 sont conservés. Les ajouts couvrent le contrat JSON strict et les doublons, les champs autorisés et leurs longueurs, les extraits sources, la découverte filtrée et mise en cache des modèles, le refus d'un modèle inventé, les mises à jour multiples, les corrections et effacements, les réponses tronquées, une seule réparation, l'absence de mutation en cas d'échec, les erreurs 401/403/404/422/429/503, Retry-After, l'annulation et la non-divulgation des secrets ou corps d'erreur.
 
-Onze tests d'intégration utilisent le véritable pipeline MVC avec WebApplicationFactory, sessions, antiforgery et transport HTTP Albert simulé. Ils vérifient la mise à jour de la fiche, la prise en compte d'une correction au tour suivant, le choix de modèle, le rejet d'une révision périmée, deux requêtes concurrentes, l'état après JSON invalide, le timeout 504, les sessions isolées, le refus du rôle administrateur et l'absence de soumission même sur une fiche complète suivie d'un « oui ».
+Onze tests d'intégration utilisent le véritable pipeline MVC avec WebApplicationFactory, sessions, antiforgery et transport HTTP Albert simulé. Ils vérifient la mise à jour de la fiche, la prise en compte d'une correction au tour suivant, le choix de modèle, le rejet d'une révision périmée, deux requêtes concurrentes, l'état après JSON invalide, le timeout 504, les sessions isolées, le refus du rôle administrateur et l'absence de transmission même sur une fiche complète suivie d'un « oui ».
 
 Le test de non-régression du recueil reproduit une première réponse d'Albert qui ne remplit que la synthèse et propose une relance générique. Il vérifie que le serveur demande l'application, puis successivement les autres informations métier et le titre, jusqu'à obtenir les dix champs obligatoires ; les rubriques facultatives restent vides. Les questions et leur rubrique sont conservées après rechargement et dans le contexte du modèle même après retrait des anciens tours. Dix tests du guide vérifient aussi la couverture de tous les champs, les informations déjà connues, les critères qualitatifs, l'effacement d'un champ, les réponses multiples, les réponses inconnues et les corrections sur un autre sujet.
 
@@ -60,9 +62,9 @@ L'application a été lancée avec Kestrel et interrogée via de vraies requête
 8. Bascule vers l'administration et absence des brouillons dans la liste.
 9. Correction refusée en HTTP 403 depuis le rôle administrateur.
 10. Retour au demandeur avec conservation du brouillon de la session.
-11. Soumission incomplète refusée en HTTP 400 côté backend.
+11. Transmission incomplète refusée en HTTP 400 côté backend.
 12. Fiche complète à 10/10 avec les sept rubriques facultatives vides.
-13. Soumission complète refusée en HTTP 409 tant que SQLite et la confirmation ne sont pas implémentées ; aucun faux succès.
+13. Transmission complète refusée en HTTP 409 tant que SQLite et la confirmation ne sont pas implémentées ; aucun faux succès.
 
 ## Document de référence
 
@@ -72,4 +74,4 @@ Les deux pages de `reference/FEB(1).docx` ont été lues intégralement, les par
 
 Le lancement de Chromium automatisé est bloqué dans cet environnement par une restriction sur les sockets Unix. Le rendu visuel des pages web, l'exécution interactive de la prévisualisation JavaScript, les formats mobile et l'accessibilité complète n'ont donc pas été vérifiés dans un navigateur. Les vues Razor ont été compilées et servies ; les routes, formulaires et protections ont été vérifiés en HTTP.
 
-Aucun test réel Albert n'a été effectué faute de clé fournie. La documentation et la spécification OpenAPI ont été consultées ; aucun catalogue authentifié de modèles n'a été obtenu. SQLite, la confirmation de soumission, la transition Validée et l'export Word restent des étapes à développer et ne sont pas présentés comme testés.
+Aucun test réel Albert n'a été effectué faute de clé fournie. La documentation et la spécification OpenAPI ont été consultées ; aucun catalogue authentifié de modèles n'a été obtenu. SQLite, la confirmation de transmission, la transition Validée et l'export Word restent des étapes à développer et ne sont pas présentés comme testés.

@@ -1,6 +1,6 @@
 # Guichet SICCRF POC étape 3
 
-Application ASP.NET Core MVC .NET 10 construite à partir du modèle officiel fourni. Un agent fictif remplit sa fiche avec Albert ou par corrections manuelles, la relit et confirme sa soumission. La demande est enregistrée dans SQLite ; l'administrateur fictif la consulte et la valide. L'IA propose les données ; les règles, les confirmations et les statuts sont contrôlés en C#.
+Application ASP.NET Core MVC .NET 10 construite à partir du modèle officiel fourni. Un agent fictif remplit sa fiche avec Albert ou par corrections manuelles, la relit et confirme sa transmission. La demande est enregistrée dans SQLite ; l'administrateur fictif la consulte et la valide. L'IA propose les données ; les règles, les confirmations et les statuts sont contrôlés en C#.
 
 ## Lancer
 
@@ -40,10 +40,10 @@ Le fichier `global.json` accepte les bandes de fonctionnalités stables .NET 10 
 - Une réparation JSON au maximum dans le délai total de l'appel ; aucun changement si elle échoue.
 - Gestion des accès refusés, modèles indisponibles, limitations avec Retry-After, erreurs réseau et timeouts sans divulguer les corps d'erreur.
 - Révision serveur et sérialisation des requêtes d'une session pour éviter les écrasements entre onglets.
-- Relecture de la fiche complète puis case de confirmation et bouton « Confirmer et soumettre cette fiche ».
+- Relecture de la fiche complète puis case de confirmation et bouton « Confirmer et transmettre cette fiche ».
 - Confirmation dans le chat uniquement après une question explicite du serveur sur la version courante. « Oui, mais… » ne vaut pas accord ; une correction annule l'attente précédente. Une relecture par bouton ne suffit pas à autoriser un accord dans le chat sans sa propre question.
-- Enregistrement SQLite avec référence unique, dates serveur et statut « Soumise » ; déduplication des doubles envois et des tentatives répétées après une interruption.
-- Fiche soumise figée et récapitulatif consultable. Le bouton « Nouvelle demande » démarre un autre brouillon.
+- Enregistrement SQLite avec référence unique, dates serveur et statut « Transmise » ; déduplication des doubles envois et des tentatives répétées après une interruption.
+- Fiche transmise figée et récapitulatif consultable. Le bouton « Nouvelle demande » démarre un autre brouillon.
 - Dashboard des demandes enregistrées, tri par date décroissante, détail des rubriques et validation en « Validée », avec auteur et date conservés même si le bouton est utilisé deux fois.
 - Protection antiforgery des POST, valeurs encodées, liste de champs autorisés, limite des tailles et mises à jour atomiques.
 - Tests ciblés des règles de fiche.
@@ -54,11 +54,11 @@ La saisie de corrections accepte une fiche incomplète pour permettre la rédact
 
 1. Ouvrir « Afficher la fiche », puis « Renseigner ou corriger la fiche ».
 2. Renseigner les dix champs obligatoires et appliquer les corrections.
-3. Cliquer « Relire et soumettre », relire les valeurs, cocher la confirmation et soumettre.
+3. Cliquer « Relire et transmettre », relire les valeurs, cocher la confirmation et transmettre.
 4. Basculer vers Administrateur dans la navbar, ouvrir la demande et cliquer « Valider la demande ».
 5. Redémarrer l'application : les demandes enregistrées restent visibles en administration.
 
-Avec Albert configuré, la conversation remplit les mêmes champs et demande la confirmation explicite lorsqu'ils sont complets. Une réponse autonome telle que « Je confirme » soumet alors la demande sans nouvel appel au modèle.
+Avec Albert configuré, la conversation remplit les mêmes champs et demande la confirmation explicite lorsqu'ils sont complets. Une réponse autonome telle que « Je confirme » transmet alors la demande sans nouvel appel au modèle.
 
 ## Limites explicites
 
@@ -66,7 +66,9 @@ Albert est raccordé, mais aucun appel réel n'a été validé avec une clé uti
 
 Les brouillons sont temporaires et propres à la session : deux heures d'inactivité maximum, perte au redémarrage du serveur ou à l'expiration de la session. La bascule de rôle dans la même session conserve le brouillon. Les rôles fictifs ne sont pas une authentification et ne conviennent pas à une publication en production. Enregistrer les modifications avant de changer de page ; les corrections non appliquées restent uniquement dans la page courante.
 
-Les demandes soumises survivent au redémarrage, indépendamment de la session. La table `Demandes` contient les identités, dates, statut et mode de confirmation ainsi qu'un instantané des champs validés dans `ChampsJson`. L'historique de conversation n'est pas enregistré dans SQLite. La référence publique utilise l'année de soumission en Europe/Paris et l'identifiant global de la table, sans remise à zéro annuelle. Les dates de soumission et validation sont présentées en heure de Paris.
+Les demandes transmises survivent au redémarrage, indépendamment de la session. La table `Demandes` contient les identités, dates, statut et mode de confirmation ainsi qu'un instantané des champs validés dans `ChampsJson`. L'historique de conversation n'est pas enregistré dans SQLite. La référence publique utilise l'année de transmission en Europe/Paris et l'identifiant global de la table, sans remise à zéro annuelle. Les dates de transmission et validation sont présentées en heure de Paris.
+
+Le vocabulaire affiché est « Transmettre / Transmise ». Les codes SQLite et noms techniques déjà utilisés restent compatibles avec les bases existantes ; le libellé du statut est traduit à l'affichage.
 
 Seuls les six derniers tours de conversation sont conservés et transmis avec la fiche structurée courante. Les champs restent conservés même après retrait des anciens messages du contexte. Les corrections manuelles non appliquées doivent être enregistrées avant de reprendre le chat. Si la connexion est interrompue après envoi, recharger la page permet de voir si la réponse a été conservée avant de renvoyer le message.
 
@@ -128,4 +130,4 @@ La clé est envoyée uniquement dans l'en-tête Authorization des requêtes serv
 4. Export Word fondé sur le modèle — à développer.
 5. Vérification du parcours complet et des reprises sur erreur — à effectuer.
 
-EF Core SQLite est inclus. Open XML SDK sera ajouté avec l'étape 4. La compilation et les tests ne nécessitent ni clé ni accès Albert. Les tests de soumission utilisent des fichiers SQLite temporaires et exécutent la migration réelle.
+EF Core SQLite est inclus. Open XML SDK sera ajouté avec l'étape 4. La compilation et les tests ne nécessitent ni clé ni accès Albert. Les tests de transmission utilisent des fichiers SQLite temporaires et exécutent la migration réelle.

@@ -26,9 +26,9 @@ public sealed class SoumissionService(GuichetDbContext db, FicheRegles regles, T
             var instantane = new FicheBrouillon();
             if (!regles.Appliquer(instantane, fiche.Champs.ToDictionary(p => p.Key, p => (string?)p.Value), out _) ||
                 !regles.EstComplete(instantane))
-                throw new DemandeException("La fiche est incomplète ou invalide. Complétez les champs obligatoires avant de soumettre.", 400);
+                throw new DemandeException("La fiche est incomplète ou invalide. Complétez les champs obligatoires avant de transmettre.", 400);
             if (!confirme || revision != fiche.Revision || !ConfirmationDemande.EnAttente(fiche))
-                throw new DemandeException("Relisez la version courante de la fiche et confirmez explicitement sa soumission.");
+                throw new DemandeException("Relisez la version courante de la fiche et confirmez explicitement sa transmission.");
             if (mode == "Chat" && !ConfirmationDemande.EnAttenteDansChat(fiche))
                 throw new DemandeException("La confirmation doit répondre à la question explicite posée dans le chat.");
             if (mode is not ("Bouton" or "Chat"))

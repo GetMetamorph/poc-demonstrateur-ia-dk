@@ -8,7 +8,7 @@ public sealed class ConversationService(IChatService chat, FicheRegles regles, E
         CancellationToken cancellationToken)
     {
         if (fiche.DemandeSoumiseId is not null)
-            throw new DemandeException("Cette demande est déjà soumise. Créez une nouvelle demande pour poursuivre.");
+            throw new DemandeException("Cette demande est déjà transmise. Créez une nouvelle demande pour poursuivre.");
         var contexte = new ChatContexte(fiche.Champs, regles.Manquants(fiche).Select(c => c.Cle).ToArray(),
             fiche.Messages, texte, entretien.QuestionCourante(fiche));
         var proposition = await chat.RepondreAsync(contexte, modele, cancellationToken);

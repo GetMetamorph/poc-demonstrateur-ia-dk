@@ -7,7 +7,7 @@ using Siccrf.Guichet.Persistence;
 namespace Siccrf.Guichet.Features.Demandes;
 
 public sealed class DemandesController(BrouillonSession brouillons, FicheRegles regles, CompteDemo compte,
-    EntretienGuide entretien, SoumissionService soumissions, GuichetDbContext db)
+    EntretienGuide entretien, SoumissionService transmissions, GuichetDbContext db)
     : Controller
 {
     private const string Vue = "~/Features/Demandes/Views/Index.cshtml";
@@ -31,7 +31,7 @@ public sealed class DemandesController(BrouillonSession brouillons, FicheRegles 
 
         var fiche = brouillons.Lire();
         if (fiche.DemandeSoumiseId is not null)
-            return ErreurFiche(fiche, "Cette demande est déjà soumise. Vous pouvez créer une nouvelle demande.", 409);
+            return ErreurFiche(fiche, "Cette demande est déjà transmise. Vous pouvez créer une nouvelle demande.", 409);
         if (!ModelState.IsValid || revision != fiche.Revision)
         {
             ModelState.AddModelError("", "La fiche a changé ou le formulaire est invalide. Les valeurs courantes sont affichées ; relisez-les avant de corriger à nouveau.");
@@ -85,8 +85,9 @@ public sealed class DemandesController(BrouillonSession brouillons, FicheRegles 
         return View("~/Features/Demandes/Views/Relecture.cshtml", fiche);
     }
 
-    [HttpPost("/demande/soumettre")]
-    public async Task<IActionResult> Soumettre([FromForm] Guid brouillonId, [FromForm] long? revision,
+    [HttpPost("/demande/transmettre")]
+    [HttpPost("/demande/soumettre", Order = 1)]
+    public async Task<IActionResult> Transmettre([FromForm] Guid brouillonId, [FromForm] long? revision,
         [FromForm] bool confirme, CancellationToken cancellationToken)
     {
         if (compte.EstAdministrateur)
@@ -96,7 +97,7 @@ public sealed class DemandesController(BrouillonSession brouillons, FicheRegles 
             return ErreurFiche(fiche, "Le formulaire de confirmation est invalide. Rechargez la fiche.", 400);
         try
         {
-            await soumissions.SoumettreAsync(fiche, brouillonId, revision, confirme, "Bouton", cancellationToken);
+            await transmissions.SoumettreAsync(fiche, brouillonId, revision, confirme, "Bouton", cancellationToken);
             brouillons.Enregistrer(fiche);
             return RedirectToAction(nameof(Recapitulatif));
         }

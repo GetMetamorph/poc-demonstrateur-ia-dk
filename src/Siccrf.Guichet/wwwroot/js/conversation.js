@@ -14,7 +14,7 @@ import { ChatFeedback } from "./chat-feedback.js";
     const error = document.getElementById("chat-error");
     const status = document.getElementById("chat-status");
     const configured = document.querySelector(".model-settings").dataset.configure === "true";
-    let submitted = document.querySelector(".model-settings").dataset.soumise === "true";
+    let submitted = document.querySelector(".model-settings").dataset.transmise === "true";
     let remaining = Number(document.getElementById("completion-progress").max) - Number(document.getElementById("completion-progress").value);
     const feedback = new ChatFeedback();
     let busy = false;
@@ -96,7 +96,7 @@ import { ChatFeedback } from "./chat-feedback.js";
         document.getElementById("submitted-reference").textContent = state.demande?.reference || "";
         document.getElementById("submission-hint").textContent = remaining === 0
             ? "La fiche est complète. Relisez-la avant de confirmer l'envoi."
-            : "La soumission sera possible lorsque les champs obligatoires seront renseignés.";
+            : "La transmission sera possible lorsque les champs obligatoires seront renseignés.";
         document.querySelectorAll("[data-revision]").forEach(input => { input.value = state.revision; });
         document.querySelectorAll("[data-preview]").forEach(preview => {
             const value = state.champs[preview.dataset.preview] || "";

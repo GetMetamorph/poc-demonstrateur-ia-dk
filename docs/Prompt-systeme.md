@@ -1,6 +1,6 @@
 # Contrat conversationnel du POC
 
-Le prompt exécuté fait référence dans [`ChatPrompt.cs`](../src/Siccrf.Guichet/Features/Conversation/ChatPrompt.cs), au plus près du contrat C#. Le backend ajoute le catalogue, la fiche structurée, ses champs manquants et la question exacte en cours dans un message système distinct, puis au maximum douze messages récents et le message courant. Le guide [`EntretienGuide.cs`](../src/Siccrf.Guichet/Features/Conversation/EntretienGuide.cs) choisit ensuite la question affichée, après validation des modifications. À complétude, le serveur pose la question de confirmation ; un accord autonome à cette question appelle la même commande de soumission que le bouton de relecture. L'IA n'interprète jamais l'accord à la place du serveur.
+Le prompt exécuté fait référence dans [`ChatPrompt.cs`](../src/Siccrf.Guichet/Features/Conversation/ChatPrompt.cs), au plus près du contrat C#. Le backend ajoute le catalogue, la fiche structurée, ses champs manquants et la question exacte en cours dans un message système distinct, puis au maximum douze messages récents et le message courant. Le guide [`EntretienGuide.cs`](../src/Siccrf.Guichet/Features/Conversation/EntretienGuide.cs) choisit ensuite la question affichée, après validation des modifications. À complétude, le serveur pose la question de confirmation ; un accord autonome à cette question appelle la même commande de transmission que le bouton de relecture. L'IA n'interprète jamais l'accord à la place du serveur.
 
 `ChatPropositionLecteur` refuse les propriétés supplémentaires, les propriétés JSON répétées, les modifications de champs inconnus ou répétés, les sources absentes du dernier message et les valeurs trop longues. `ConversationService` applique ensuite les règles de fiche avant toute écriture du brouillon. Une valeur JSON `null` efface le champ ; les champs omis ne sont pas modifiés. L'IA ne contrôle ni la complétude ni les statuts.
 
@@ -35,11 +35,11 @@ Accepte les corrections et les changements d'avis. Remplace intégralement la va
 Utilise null pour effacer une information explicitement retirée ; omets les champs qui ne changent pas.
 Pour chaque modification, cite dans source un court extrait exact du dernier message de l'agent qui la justifie. Ne crée pas de mise à jour sans appui dans ses propos.
 
-Ne modifie jamais les identités, le bureau, le numéro, les dates de confirmation/soumission/validation ou le statut.
-Tu n'as accès ni à la base ni à une action de soumission ou de validation.
-Ne prétends jamais avoir enregistré, soumis ou validé une demande.
+Ne modifie jamais les identités, le bureau, le numéro, les dates de confirmation/transmission/validation ou le statut.
+Tu n'as accès ni à la base ni à une action de transmission ou de validation.
+Ne prétends jamais avoir enregistré, transmis ou validé une demande.
 Ne déduis aucun accord implicite. Le serveur gère la relecture et la question explicite de confirmation sur la version complète de la fiche.
-Quand la fiche est complète, tu peux inviter l'agent à la relire. Ne déclare pas de ta propre autorité que la soumission est autorisée.
+Quand la fiche est complète, tu peux inviter l'agent à la relire. Ne déclare pas de ta propre autorité que la transmission est autorisée.
 
 Retourne uniquement un objet JSON, sans Markdown, bloc de code ou texte autour :
 {

@@ -4,13 +4,13 @@
     var demande = Model.Demande;
 }
 <article class="panel document-page">
-    <div class="panel-header"><div><p class="eyebrow mb-1">@demande.Reference</p><h1>@demande.Intitule</h1></div><span class="badge @(demande.Statut == StatutsDemande.Validee ? "text-bg-success" : "text-bg-primary")">@demande.Statut</span></div>
+    <div class="panel-header"><div><p class="eyebrow mb-1">@demande.Reference</p><h1>@demande.Intitule</h1></div><span class="badge @(demande.Statut == StatutsDemande.Validee ? "text-bg-success" : "text-bg-primary")">@demande.LibelleStatut</span></div>
     @if (TempData["Succes"] is string succes) { <div class="alert alert-success m-3" role="status">@succes</div> }
     @if (TempData["Erreur"] is string erreur) { <div class="alert alert-warning m-3" role="alert">@erreur</div> }
     <dl class="identity-grid">
         <div><dt>Demandeur</dt><dd>@demande.Demandeur</dd></div>
         <div><dt>Bureau</dt><dd>@demande.Bureau</dd></div>
-        <div><dt>Soumise le (heure de Paris)</dt><dd>@DatesFrance.Afficher(demande.DateSoumissionUtc)</dd></div>
+        <div><dt>Transmise le (heure de Paris)</dt><dd>@DatesFrance.Afficher(demande.DateSoumissionUtc)</dd></div>
         <div><dt>Confirmation explicite</dt><dd>@DatesFrance.Afficher(demande.DateConfirmationUtc) · @demande.ModeConfirmation</dd></div>
         <div><dt>Valideur prévu</dt><dd>@demande.ValideurPrevu</dd></div>
         @if (demande.DateValidationUtc is DateTime dateValidation)

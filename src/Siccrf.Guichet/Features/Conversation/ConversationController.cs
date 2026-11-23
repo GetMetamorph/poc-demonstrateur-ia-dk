@@ -10,7 +10,7 @@ namespace Siccrf.Guichet.Features.Conversation;
 [Route("conversation")]
 public sealed class ConversationController(
     BrouillonSession brouillons, CompteDemo compte, FicheRegles regles, ConversationService conversation,
-    AlbertCatalogue catalogue, IOptions<AlbertOptions> options, SoumissionService soumissions) : ControllerBase
+    AlbertCatalogue catalogue, IOptions<AlbertOptions> options, SoumissionService transmissions) : ControllerBase
 {
     [HttpGet("modeles")]
     public Task<IActionResult> Modeles() => ExecuterAsync(async cancellationToken =>
@@ -52,14 +52,14 @@ public sealed class ConversationController(
         var texte = commande.Texte.Trim();
         if (ConfirmationDemande.EnAttenteDansChat(fiche) && ConfirmationDemande.EstAccord(texte))
         {
-            var demande = await soumissions.SoumettreAsync(fiche, fiche.Id, commande.Revision, true, "Chat", cancellationToken);
-            fiche.AjouterEchange(texte, $"Votre demande {demande.Reference} est enregistrée avec le statut « Soumise ». Elle est transmise au valideur fictif dans le portail.");
+            var demande = await transmissions.SoumettreAsync(fiche, fiche.Id, commande.Revision, true, "Chat", cancellationToken);
+            fiche.AjouterEchange(texte, $"Votre demande {demande.Reference} est enregistrée avec le statut « Transmise ». Elle est transmise au valideur fictif dans le portail.");
         }
         else if (ConfirmationDemande.EnAttenteDansChat(fiche) && ConfirmationDemande.EstRefus(texte))
         {
             ConfirmationDemande.Annuler(fiche);
             fiche.Revision++;
-            fiche.AjouterEchange(texte, "La demande n'a pas été soumise. Vous pouvez corriger la fiche ou utiliser « Relire et soumettre » lorsque vous serez prêt.");
+            fiche.AjouterEchange(texte, "La demande n'a pas été transmise. Vous pouvez corriger la fiche ou utiliser « Relire et transmettre » lorsque vous serez prêt.");
         }
         else
             await conversation.EnvoyerAsync(fiche, texte, Selection(fiche), cancellationToken);
@@ -84,7 +84,7 @@ public sealed class ConversationController(
 
     private ConflictObjectResult Conflit(FicheBrouillon fiche) => Conflict(new
     {
-        erreur = fiche.DemandeSoumiseId is not null ? "Cette demande est déjà soumise. Vous pouvez consulter son récapitulatif ou créer une nouvelle demande." :
+        erreur = fiche.DemandeSoumiseId is not null ? "Cette demande est déjà transmise. Vous pouvez consulter son récapitulatif ou créer une nouvelle demande." :
             "La fiche a changé dans un autre onglet. Son état courant a été rechargé ; relisez-le avant de réessayer.",
         etat = Etat(fiche)
     });
@@ -108,7 +108,7 @@ public sealed class ConversationController(
         }
         catch (DemandeException exception)
         {
-            return StatusCode(exception.Statut, new { erreur = exception.Message, code = "soumission" });
+            return StatusCode(exception.Statut, new { erreur = exception.Message, code = "transmission" });
         }
         catch (OperationCanceledException) when (!HttpContext.RequestAborted.IsCancellationRequested)
         {

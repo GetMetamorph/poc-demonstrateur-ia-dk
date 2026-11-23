@@ -37,6 +37,8 @@ public sealed class SoumissionHttpTests
         var token = Jeton(page);
         var relecture = await Preparer(client, token, Revision(page));
         Assert.Contains("Je confirme que cette fiche", relecture);
+        Assert.Contains("action=\"/demande/transmettre\"", relecture);
+        Assert.Contains("Confirmer et transmettre cette fiche", relecture);
         var id = Valeur(relecture, "brouillonId");
         var revision = Revision(relecture);
         using var sansAccord = await client.PostAsync("/demande/soumettre", Formulaire(token,
@@ -81,6 +83,8 @@ public sealed class SoumissionHttpTests
         await Administrateur(client, token);
         var liste = WebUtility.HtmlDecode(await client.GetStringAsync("/administration"));
         Assert.Contains(demande.Reference, liste);
+        Assert.Contains("Transmise", liste);
+        Assert.DoesNotContain("Soumise", liste);
         Assert.DoesNotContain("Brouillon non soumis à masquer", liste);
         using var sansAntiforgery = await client.PostAsync($"/administration/demandes/{demande.Id}/valider", new FormUrlEncodedContent([]));
         Assert.Equal(HttpStatusCode.BadRequest, sansAntiforgery.StatusCode);
@@ -237,7 +241,7 @@ public sealed class SoumissionHttpTests
         return await resultat.Content.ReadAsStringAsync();
     }
     private static Task<HttpResponseMessage> Soumettre(HttpClient client, string token, string relecture) =>
-        client.PostAsync("/demande/soumettre", Formulaire(token, ("brouillonId", Valeur(relecture, "brouillonId")),
+        client.PostAsync("/demande/transmettre", Formulaire(token, ("brouillonId", Valeur(relecture, "brouillonId")),
             ("revision", Revision(relecture)), ("confirme", "true")));
     private static Task<HttpResponseMessage> Administrateur(HttpClient client, string token) =>
         client.PostAsync("/compte-demo/changer", Formulaire(token, ("role", "administrateur")));

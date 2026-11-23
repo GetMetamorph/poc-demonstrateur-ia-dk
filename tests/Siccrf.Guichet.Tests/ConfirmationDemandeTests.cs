@@ -9,6 +9,7 @@ public sealed class ConfirmationDemandeTests
     [InlineData("oui")]
     [InlineData(" Je confirme ! ")]
     [InlineData("OUI, JE CONFIRME")]
+    [InlineData("Je confirme la transmission")]
     public void UnAccordAutonomePeutEtreReconnu(string texte) => Assert.True(ConfirmationDemande.EstAccord(texte));
 
     [Theory]

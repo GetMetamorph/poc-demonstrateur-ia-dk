@@ -4,13 +4,13 @@
 }
 <article class="panel document-page">
     <div class="panel-header"><h1>Relire et confirmer votre demande</h1><a href="/" class="btn btn-outline-secondary">Revenir aux corrections</a></div>
-    <div class="document-intro"><p>Vérifiez cette fiche avant de la soumettre à validation. Elle n'est pas encore enregistrée comme demande soumise.</p><p class="small text-secondary mb-0">@CompteDemo.Demandeur · @CompteDemo.Bureau · Valideur prévu : @CompteDemo.Valideur</p></div>
+    <div class="document-intro"><p>Vérifiez cette fiche avant de la transmettre à validation. Elle n'est pas encore enregistrée comme demande transmise.</p><p class="small text-secondary mb-0">@CompteDemo.Demandeur · @CompteDemo.Bureau · Valideur prévu : @CompteDemo.Valideur</p></div>
     @await Html.PartialAsync("~/Features/Demandes/Views/_Rubriques.cshtml", Model.Champs)
-    <form asp-controller="Demandes" asp-action="Soumettre" method="post" class="confirmation-form">
+    <form asp-controller="Demandes" asp-action="Transmettre" method="post" class="confirmation-form">
         <input type="hidden" name="brouillonId" value="@Model.Id" />
         <input type="hidden" name="revision" value="@Model.Revision" />
-        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="confirme" value="true" id="confirme" required /><label class="form-check-label" for="confirme">Je confirme que cette fiche reflète fidèlement le besoin que je souhaite soumettre à validation.</label></div>
+        <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="confirme" value="true" id="confirme" required /><label class="form-check-label" for="confirme">Je confirme que cette fiche reflète fidèlement le besoin que je souhaite transmettre à validation.</label></div>
         <p class="small text-secondary">Toute correction de la fiche nécessite une nouvelle confirmation. Les rubriques facultatives vides ne bloquent pas l'envoi.</p>
-        <button type="submit" class="btn btn-primary">Confirmer et soumettre cette fiche</button>
+        <button type="submit" class="btn btn-primary">Confirmer et transmettre cette fiche</button>
     </form>
 </article>

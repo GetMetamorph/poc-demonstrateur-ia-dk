@@ -26,6 +26,8 @@ public sealed class Demande
     public string? ValidePar { get; set; }
 
     [NotMapped] public string Intitule => Champs.GetValueOrDefault("intitule", "");
+    // Le code SQLite existant reste stable ; le vocabulaire affiché évolue.
+    [NotMapped] public string LibelleStatut => Statut == StatutsDemande.Soumise ? "Transmise" : Statut;
     [NotMapped] public string Reference => $"EB-{DatesFrance.Convertir(DateSoumissionUtc).Year}-{Id:0000}";
 }
 

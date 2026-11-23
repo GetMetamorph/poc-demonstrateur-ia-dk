@@ -9,4 +9,5 @@ public sealed class FicheBrouillon
     public long Revision { get; set; }
     public string? ModeleAlbert { get; set; }
     public List<ChatMessage> Messages { get; init; } = [];
+    public ChatQuestion? QuestionEnCours { get; set; }
 }

@@ -2,13 +2,13 @@ using Siccrf.Guichet.Features.Demandes;
 
 namespace Siccrf.Guichet.Features.Conversation;
 
-public sealed class ConversationService(IChatService chat, FicheRegles regles)
+public sealed class ConversationService(IChatService chat, FicheRegles regles, EntretienGuide entretien)
 {
     public async Task EnvoyerAsync(FicheBrouillon fiche, string texte, string modele,
         CancellationToken cancellationToken)
     {
         var contexte = new ChatContexte(fiche.Champs, regles.Manquants(fiche).Select(c => c.Cle).ToArray(),
-            fiche.Messages, texte);
+            fiche.Messages, texte, entretien.QuestionCourante(fiche));
         var proposition = await chat.RepondreAsync(contexte, modele, cancellationToken);
         cancellationToken.ThrowIfCancellationRequested();
         var changements = proposition.Modifications.ToDictionary(m => m.Champ, m => m.Valeur);
@@ -16,7 +16,9 @@ public sealed class ConversationService(IChatService chat, FicheRegles regles)
             throw AlbertApiClient.ReponseInvalide();
 
         fiche.Messages.Add(new ChatMessage("user", texte));
-        fiche.Messages.Add(new ChatMessage("assistant", proposition.Message));
+        // Ne jamais afficher la relance libre du modèle : le guide couvre les champs
+        // réellement manquants, y compris si Albert ne propose qu'une synthèse.
+        fiche.Messages.Add(new ChatMessage("assistant", entretien.PreparerReponse(fiche)));
         if (fiche.Messages.Count > 12)
             fiche.Messages.RemoveRange(0, fiche.Messages.Count - 12);
         fiche.Revision++;

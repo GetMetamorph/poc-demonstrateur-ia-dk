@@ -26,6 +26,8 @@ Le fichier `global.json` accepte les bandes de fonctionnalités stables .NET 10 
 - Après application, progression et liste des manques calculées par le backend.
 - Découverte des modèles via Albert ; seuls les identifiants réellement renvoyés pour la génération de texte sont acceptés.
 - Conversation française, extraction de plusieurs champs par réponse, remplacement et effacement de valeurs corrigées.
+- Guide d'entretien déterministe en .NET : après chaque mise à jour validée, une question vise un champ obligatoire encore manquant. Les questions libres d'Albert ne sont pas affichées. Le guide couvre d'abord les informations métier, puis le titre et la synthèse s'ils manquent encore ; les champs déjà renseignés sont sautés.
+- La question exacte et sa rubrique sont conservées en session et transmises à Albert pour interpréter une réponse courte. Une réponse insuffisante entraîne une demande de précision, jamais un remplissage arbitraire. L'entretien continue jusqu'à complétude des dix champs obligatoires, puis invite à relire sans demander les rubriques facultatives.
 - Aperçu, formulaire de correction, liste des manques et historique récent actualisés après chaque réponse acceptée.
 - JSON strict : champs inconnus, doublons, types incorrects, longueurs excessives et extraits sources absents du message sont rejetés. La présence d'un extrait ne prouve pas à elle seule la fidélité sémantique d'une reformulation : relire la fiche reste nécessaire.
 - Une réparation JSON au maximum dans le délai total de l'appel ; aucun changement si elle échoue.

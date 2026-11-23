@@ -111,6 +111,9 @@
             return container;
         }));
         acceptedModel = state.modele || "";
+        const target = document.getElementById("chat-cible");
+        target.textContent = state.question ? `À préciser : ${state.question.libelle}` : "";
+        target.hidden = !state.question;
         if (select && ![...select.options].some(option => option.value === acceptedModel) && acceptedModel)
             select.add(new Option(acceptedModel, acceptedModel));
         if (select) select.value = acceptedModel;

@@ -53,6 +53,7 @@
         <form asp-controller="Conversation" asp-action="Envoyer" method="post" class="chat-compose" id="chat-form">
             <input type="hidden" name="revision" data-revision value="@Model.Fiche.Revision" />
             <label for="message" class="form-label">Votre message</label>
+            <p id="chat-cible" class="small text-secondary" hidden="@(Model.Fiche.QuestionEnCours is null)">@(Model.Fiche.QuestionEnCours is { } question ? $"À préciser : {question.Libelle}" : "")</p>
             <textarea id="message" name="texte" class="form-control" rows="3" maxlength="4000" required
                       placeholder="Par exemple : nous ressaisissons chaque semaine les mêmes informations…"
                       disabled="@(!clePresente)" aria-describedby="chat-help"></textarea>

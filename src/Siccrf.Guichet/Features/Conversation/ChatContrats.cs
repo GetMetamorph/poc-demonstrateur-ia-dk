@@ -1,13 +1,15 @@
 namespace Siccrf.Guichet.Features.Conversation;
 
 public sealed record ChatMessage(string Role, string Content);
+public sealed record ChatQuestion(string Champ, string Libelle, string Texte);
 public sealed record ChatModification(string Champ, string? Valeur, string Source);
 public sealed record ChatProposition(string Message, IReadOnlyList<ChatModification> Modifications);
 public sealed record ChatContexte(
     IReadOnlyDictionary<string, string> Champs,
     IReadOnlyList<string> Manquants,
     IReadOnlyList<ChatMessage> Historique,
-    string Message);
+    string Message,
+    ChatQuestion? QuestionEnCours = null);
 public sealed record AlbertModele(string Id);
 
 public interface IChatService

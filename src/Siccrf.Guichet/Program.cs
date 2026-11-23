@@ -19,6 +19,7 @@ builder.Services.AddScoped<AlbertCatalogue>();
 builder.Services.AddSingleton<ChatPropositionLecteur>();
 builder.Services.AddScoped<IChatService, AlbertChatService>();
 builder.Services.AddScoped<ConversationService>();
+builder.Services.AddSingleton<EntretienGuide>();
 builder.Services.AddSession(options =>
 {
     options.Cookie.Name = "Siccrf.Demo";

@@ -1,9 +1,11 @@
 using Microsoft.AspNetCore.Mvc;
 using Siccrf.Guichet.Features.ComptesDemo;
+using Siccrf.Guichet.Features.Conversation;
 
 namespace Siccrf.Guichet.Features.Demandes;
 
-public sealed class DemandesController(BrouillonSession brouillons, FicheRegles regles, CompteDemo compte)
+public sealed class DemandesController(BrouillonSession brouillons, FicheRegles regles, CompteDemo compte,
+    EntretienGuide entretien)
     : Controller
 {
     private const string Vue = "~/Features/Demandes/Views/Index.cshtml";
@@ -41,6 +43,7 @@ public sealed class DemandesController(BrouillonSession brouillons, FicheRegles 
         }
 
         fiche.Revision++;
+        fiche.QuestionEnCours = entretien.QuestionCourante(fiche);
         brouillons.Enregistrer(fiche);
         TempData["Succes"] = "Les corrections ont été appliquées au brouillon.";
         return RedirectToAction(nameof(Index));

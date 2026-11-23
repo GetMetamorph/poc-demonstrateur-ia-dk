@@ -174,7 +174,8 @@ public sealed class AlbertChatServiceTests : IDisposable
 
     private AlbertCatalogue Catalogue() => new(new AlbertApiClient(_http, Options.Create(_options)), _cache);
     private ConversationService Conversation() => new(new AlbertChatService(
-        new AlbertApiClient(_http, Options.Create(_options)), Catalogue(), new ChatPropositionLecteur()), new FicheRegles());
+        new AlbertApiClient(_http, Options.Create(_options)), Catalogue(), new ChatPropositionLecteur()),
+        new FicheRegles(), new EntretienGuide(new FicheRegles()));
 
     public void Dispose()
     {

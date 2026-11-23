@@ -201,6 +201,66 @@ public sealed class ConversationHttpTests
         Assert.Equal(HttpStatusCode.Conflict, soumission.StatusCode);
     }
 
+    [Fact]
+    public async Task LeRecueilContinueApresUneSyntheseJusquaTousLesChampsObligatoires()
+    {
+        using var api = new AlbertTestApi();
+        api.Catalogue();
+        var debut = "Il me faut un suivi centralisé des dossiers.";
+        static string Proposition(string champ, string valeur) => JsonSerializer.Serialize(new
+        {
+            message = "OK, auriez-vous d'autres informations ?",
+            modifications = new[] { new { champ, valeur, source = valeur } }
+        });
+        api.Completion(Proposition("synthese", debut));
+        var reponses = new (string Champ, string Texte)[]
+        {
+            ("application", "Nouveau service"),
+            ("situationActuelle", "Chaque bureau tient un tableau Excel et l'envoie par mail."),
+            ("difficultes", "Les versions divergent et des dossiers sont oubliés."),
+            ("resultat", "Partager un suivi unique accessible aux bureaux."),
+            ("beneficiaires", "Les agents chargés du suivi et les chefs de bureau."),
+            ("processus", "Le suivi de l'instruction des dossiers."),
+            ("criteresReussite", "Un agent retrouve le statut à jour sans demander un tableau par mail."),
+            ("benefices", "Moins de relances et une information plus fiable."),
+            ("intitule", "Centraliser le suivi des dossiers")
+        };
+        foreach (var reponse in reponses)
+            api.Completion(Proposition(reponse.Champ, reponse.Texte));
+
+        using var app = Application(api);
+        using var client = app.CreateClient();
+        var token = await Jeton(client);
+        using var premier = await Envoyer(client, token, debut, 0);
+        Assert.Equal(HttpStatusCode.OK, premier.StatusCode);
+        var etat = await premier.Content.ReadFromJsonAsync<JsonElement>();
+        Assert.Equal(9, etat.GetProperty("manquants").GetArrayLength());
+        Assert.Equal("application", etat.GetProperty("question").GetProperty("champ").GetString());
+        var page = WebUtility.HtmlDecode(await client.GetStringAsync("/"));
+        Assert.Contains("À préciser : Application ou service numérique concerné", page);
+
+        foreach (var (champ, texte) in reponses)
+        {
+            Assert.Equal(champ, etat.GetProperty("question").GetProperty("champ").GetString());
+            using var reponse = await Envoyer(client, token, texte, etat.GetProperty("revision").GetInt64());
+            Assert.Equal(HttpStatusCode.OK, reponse.StatusCode);
+            etat = await reponse.Content.ReadFromJsonAsync<JsonElement>();
+            Assert.Equal(texte, etat.GetProperty("champs").GetProperty(champ).GetString());
+            Assert.DoesNotContain("autres informations", etat.GetProperty("messages").EnumerateArray().Last().GetProperty("content").GetString());
+        }
+
+        Assert.Equal(0, etat.GetProperty("manquants").GetArrayLength());
+        Assert.Equal(JsonValueKind.Null, etat.GetProperty("question").ValueKind);
+        Assert.Contains("Relisez", etat.GetProperty("messages").EnumerateArray().Last().GetProperty("content").GetString());
+        Assert.Equal(11, api.Requetes.Count);
+
+        // Le dernier message court reste rattaché au titre, même après retrait des anciens tours.
+        using var requete = JsonDocument.Parse(api.Requetes[^1].Body);
+        var contexte = requete.RootElement.GetProperty("messages")[1].GetProperty("content").GetString()!;
+        using var contexteJson = JsonDocument.Parse(contexte[contexte.IndexOf('{')..]);
+        Assert.Equal("intitule", contexteJson.RootElement.GetProperty("questionEnCours").GetProperty("champ").GetString());
+    }
+
     private static WebApplicationFactory<Program> Application(AlbertTestApi api, string cle = "cle-factice-tests-http",
         string modele = "modele-test", string delai = "5") => new WebApplicationFactory<Program>().WithWebHostBuilder(builder =>
     {

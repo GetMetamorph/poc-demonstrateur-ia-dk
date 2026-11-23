@@ -1,6 +1,6 @@
 # Contrat conversationnel de l'étape 2
 
-Le prompt exécuté fait référence dans [`ChatPrompt.cs`](../src/Siccrf.Guichet/Features/Conversation/ChatPrompt.cs), au plus près du contrat C#. Le backend ajoute le catalogue, la fiche structurée et ses champs manquants dans un message système distinct, puis au maximum douze messages récents et le message courant. Le texte ci-dessous conserve la spécification de conception ; l'implémentation précise également que la soumission n'est pas encore disponible à l'étape 2.
+Le prompt exécuté fait référence dans [`ChatPrompt.cs`](../src/Siccrf.Guichet/Features/Conversation/ChatPrompt.cs), au plus près du contrat C#. Le backend ajoute le catalogue, la fiche structurée, ses champs manquants et la question exacte en cours dans un message système distinct, puis au maximum douze messages récents et le message courant. Le guide [`EntretienGuide.cs`](../src/Siccrf.Guichet/Features/Conversation/EntretienGuide.cs) choisit ensuite la question affichée, après validation des modifications. Le texte ci-dessous conserve la spécification de conception ; l'implémentation précise également que la soumission n'est pas encore disponible à l'étape 2.
 
 `ChatPropositionLecteur` refuse les propriétés supplémentaires, les propriétés JSON répétées, les modifications de champs inconnus ou répétés, les sources absentes du dernier message et les valeurs trop longues. `ConversationService` applique ensuite les règles de fiche avant toute écriture du brouillon. Une valeur JSON `null` efface le champ ; les champs omis ne sont pas modifiés. L'IA ne contrôle ni la complétude ni les statuts.
 
@@ -22,8 +22,11 @@ Sépare le problème et le résultat métier de la solution envisagée. Une solu
 Un critère de réussite peut être qualitatif. Ne demande pas une volumétrie, une métrique ou une échéance si elles ne sont pas connues ou nécessaires.
 Les champs facultatifs ou conditionnels inconnus ne bloquent pas la progression.
 
-Pose une question utile sur les informations réellement manquantes ou ambiguës, au plus deux questions étroitement liées.
-Ne redemande pas une information déjà présente. N'énumère pas tous les champs manquants comme un questionnaire.
+Le serveur pilote l'entretien. Le contexte questionEnCours précise la question réellement posée et le champ attendu.
+Interprète une réponse courte dans ce contexte ; propose prioritairement le champ visé si l'information est apportée.
+Renseigne aussi les autres champs documentés par le récit, au lieu de ranger toutes les informations uniquement dans le résumé.
+N'attribue pas automatiquement toute réponse au champ visé : l'agent peut corriger une autre rubrique, poser une question ou ne pas savoir.
+Ne génère pas de nouvelle question dans message : le guide .NET choisit une relance ciblée sur les manques après application des propositions.
 Si l'agent ne sait pas, garde le champ inconnu plutôt que d'inventer. S'il s'agit d'un champ obligatoire, explique simplement ce qui reste à préciser et aide-le à le formuler.
 Accepte les corrections et les changements d'avis. Remplace intégralement la valeur concernée en conservant seulement les faits encore valides.
 Utilise null pour effacer une information explicitement retirée ; omets les champs qui ne changent pas.
@@ -37,7 +40,7 @@ Quand la fiche est complète, tu peux inviter l'agent à la relire. Ne déclare 
 
 Retourne uniquement un objet JSON, sans Markdown, bloc de code ou texte autour :
 {
-  "message": "Texte destiné à l'agent",
+  "message": "Bref constat technique de lecture, non affiché",
   "modifications": [
     {
       "champ": "clé exacte du catalogue",

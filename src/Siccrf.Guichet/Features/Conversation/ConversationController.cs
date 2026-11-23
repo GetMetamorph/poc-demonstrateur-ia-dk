@@ -54,6 +54,7 @@ public sealed class ConversationController(
         revision = fiche.Revision,
         champs = fiche.Champs,
         messages = fiche.Messages,
+        question = fiche.QuestionEnCours,
         manquants = regles.Manquants(fiche).Select(c => new { cle = c.Cle, libelle = c.Libelle }),
         nombreObligatoires = FicheCatalogue.Champs.Count(c => c.Obligatoire),
         modele = Selection(fiche)
